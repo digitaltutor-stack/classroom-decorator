@@ -6,98 +6,44 @@
 <title>선생님 화면 👩‍🏫</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    min-height: 100vh;
-    background: linear-gradient(135deg, #fff9c4 0%, #ffe0f0 50%, #c8f0ff 100%);
-    font-family: 'Jua', sans-serif;
-    padding: 28px 36px;
-    display: flex; flex-direction: column;
-  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { min-height:100vh; background:linear-gradient(135deg,#fff9c4 0%,#ffe0f0 50%,#c8f0ff 100%); font-family:'Jua',sans-serif; padding:28px 36px; display:flex; flex-direction:column; }
   .bg-stars { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; overflow:hidden; }
   .bg-star { position:absolute; animation:floatStar 4s ease-in-out infinite; opacity:0.4; }
   @keyframes floatStar { 0%,100%{transform:translateY(0) rotate(0deg);} 50%{transform:translateY(-18px) rotate(12deg);} }
-
-  header {
-    position:relative; z-index:1;
-    display:flex; align-items:center; justify-content:space-between;
-    margin-bottom:20px; flex-wrap:wrap; gap:16px;
-  }
+  header { position:relative; z-index:1; display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:16px; }
   .header-left h1 { font-size:2.4rem; color:#ff6b9d; }
   .header-left p { font-size:1.1rem; color:#bbb; margin-top:4px; }
-  .count-badge {
-    background:linear-gradient(135deg,#ff6b9d,#ff9a3c);
-    border-radius:50px; padding:12px 32px;
-    font-size:1.8rem; color:white;
-    box-shadow:0 4px 20px rgba(255,107,157,0.35);
-  }
+  .count-badge { background:linear-gradient(135deg,#ff6b9d,#ff9a3c); border-radius:50px; padding:12px 32px; font-size:1.8rem; color:white; box-shadow:0 4px 20px rgba(255,107,157,0.35); }
   .controls { position:relative; z-index:1; display:flex; gap:12px; margin-bottom:16px; align-items:center; }
-  .ctrl-btn {
-    font-family:'Jua',sans-serif; font-size:1.1rem;
-    padding:10px 22px; border:2.5px solid rgba(255,107,157,0.3);
-    border-radius:50px; background:rgba(255,255,255,0.7);
-    color:#ff6b9d; cursor:pointer;
-  }
+  .ctrl-btn { font-family:'Jua',sans-serif; font-size:1.1rem; padding:10px 22px; border:2.5px solid rgba(255,107,157,0.3); border-radius:50px; background:rgba(255,255,255,0.7); color:#ff6b9d; cursor:pointer; }
   .ctrl-btn.danger { border-color:rgba(255,80,80,0.3); color:#ff4444; }
   .status { display:flex; align-items:center; gap:8px; font-size:1rem; color:#bbb; margin-left:8px; }
   .dot { width:10px; height:10px; border-radius:50%; background:#4caf50; animation:pulse 1.5s infinite; }
   @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
-
-  .names-grid {
-    position:relative; z-index:1;
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    grid-template-rows:repeat(2,1fr);
-    gap:20px; flex:1;
-  }
-  .name-card {
-    background:rgba(255,255,255,0.88);
-    border-radius:28px; padding:28px 32px;
-    border:3px solid transparent;
-    box-shadow:0 8px 30px rgba(255,150,180,0.15);
-    animation:popIn 0.6s cubic-bezier(0.68,-0.55,0.27,1.55);
-    display:flex; flex-direction:column; justify-content:center; gap:10px;
-    position:relative;
-  }
+  .names-grid { position:relative; z-index:1; display:grid; grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(2,1fr); gap:20px; flex:1; }
+  .name-card { background:rgba(255,255,255,0.88); border-radius:28px; padding:28px 32px; border:3px solid transparent; box-shadow:0 8px 30px rgba(255,150,180,0.15); animation:popIn 0.6s cubic-bezier(0.68,-0.55,0.27,1.55); display:flex; flex-direction:column; justify-content:center; gap:10px; position:relative; }
   @keyframes popIn { 0%{transform:scale(0) rotate(-5deg);opacity:0;} 100%{transform:scale(1) rotate(0deg);opacity:1;} }
-
-  .delete-btn {
-    position:absolute; top:14px; right:14px;
-    width:38px; height:38px; border-radius:50%;
-    background:rgba(255,80,80,0.1); border:2px solid rgba(255,80,80,0.25);
-    color:#ff4444; font-size:1.1rem; cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-    opacity:0; transition:opacity 0.2s; font-family:sans-serif;
-  }
+  .delete-btn { position:absolute; top:14px; right:14px; width:38px; height:38px; border-radius:50%; background:rgba(255,80,80,0.1); border:2px solid rgba(255,80,80,0.25); color:#ff4444; font-size:1.1rem; cursor:pointer; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.2s; font-family:sans-serif; }
   .name-card:hover .delete-btn { opacity:1; }
-
-  .name-card:nth-child(6n+1) { border-color:#ff6b9d; background:rgba(255,240,245,0.92); }
-  .name-card:nth-child(6n+2) { border-color:#ffc107; background:rgba(255,253,230,0.92); }
-  .name-card:nth-child(6n+3) { border-color:#4fc3f7; background:rgba(230,248,255,0.92); }
-  .name-card:nth-child(6n+4) { border-color:#66bb6a; background:rgba(232,255,234,0.92); }
-  .name-card:nth-child(6n+5) { border-color:#ff9a3c; background:rgba(255,245,230,0.92); }
-  .name-card:nth-child(6n+6) { border-color:#ce93d8; background:rgba(245,235,255,0.92); }
-
+  .name-card:nth-child(6n+1){border-color:#ff6b9d;background:rgba(255,240,245,0.92);}
+  .name-card:nth-child(6n+2){border-color:#ffc107;background:rgba(255,253,230,0.92);}
+  .name-card:nth-child(6n+3){border-color:#4fc3f7;background:rgba(230,248,255,0.92);}
+  .name-card:nth-child(6n+4){border-color:#66bb6a;background:rgba(232,255,234,0.92);}
+  .name-card:nth-child(6n+5){border-color:#ff9a3c;background:rgba(255,245,230,0.92);}
+  .name-card:nth-child(6n+6){border-color:#ce93d8;background:rgba(245,235,255,0.92);}
   .card-top { display:flex; align-items:center; justify-content:space-between; padding-right:30px; }
   .card-grade { font-size:1.3rem; color:#bbb; }
   .card-mood { font-size:3rem; }
   .card-name { font-size:4rem; color:#333; line-height:1.2; }
   .card-memo { font-size:1.3rem; color:#777; line-height:1.6; word-break:break-all; background:rgba(0,0,0,0.05); border-radius:12px; padding:10px 14px; }
-
-  .empty-state {
-    text-align:center; grid-column:1/-1;
-    display:flex; flex-direction:column;
-    align-items:center; justify-content:center;
-    gap:20px; padding:60px 0; color:#ccc;
-  }
+  .empty-state { text-align:center; grid-column:1/-1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px; padding:60px 0; color:#ccc; }
   .empty-state .emoji { font-size:7rem; }
   .empty-state p { font-size:2rem; }
 </style>
 </head>
 <body>
-
 <div class="bg-stars" id="bgStars"></div>
-
 <header>
   <div class="header-left">
     <h1>🌟 선생님 화면</h1>
@@ -105,16 +51,11 @@
   </div>
   <div class="count-badge" id="countBadge">0명 제출</div>
 </header>
-
 <div class="controls">
   <button class="ctrl-btn" onclick="loadNames()">🔄 지금 새로고침</button>
   <button class="ctrl-btn danger" onclick="clearAll()">🗑️ 전체 지우기</button>
-  <div class="status">
-    <div class="dot"></div>
-    <span id="statusText">자동 새로고침 중...</span>
-  </div>
+  <div class="status"><div class="dot"></div><span id="statusText">자동 새로고침 중...</span></div>
 </div>
-
 <div class="names-grid" id="namesGrid">
   <div class="empty-state">
     <span class="emoji">⏳</span>
@@ -122,28 +63,19 @@
     <p style="font-size:1.4rem;">학생들이 QR을 찍고 이름을 쓰면 여기에 나타납니다!</p>
   </div>
 </div>
-
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdGODDgP2tjewoo1Hfr0qv64Z09xNBD71q2s1gO8LiezcOB4E32Zmd95bJH_fvgQJ-/exec';
+let loadedRows = new Set(); // 이미 화면에 표시된 row 번호
 
-// 숨긴 인덱스 목록 (새로고침해도 기억)
-let hiddenIndexes = new Set(
-  JSON.parse(sessionStorage.getItem('hiddenIndexes') || '[]')
-);
-let totalLoaded = 0;
-
-// 배경 별
 const starEmojis = ['⭐','🌟','✨','💫','🎀','🌸','🍀','🌈','🎉','💕'];
 const bgStars = document.getElementById('bgStars');
-for (let i = 0; i < 16; i++) {
-  const s = document.createElement('div');
-  s.className = 'bg-star';
-  s.textContent = starEmojis[i % starEmojis.length];
-  s.style.left = Math.random() * 100 + '%';
-  s.style.top = Math.random() * 100 + '%';
-  s.style.fontSize = (1.2 + Math.random() * 1.5) + 'rem';
-  s.style.animationDelay = (Math.random() * 4) + 's';
-  s.style.animationDuration = (3 + Math.random() * 3) + 's';
+for (let i=0;i<16;i++){
+  const s=document.createElement('div'); s.className='bg-star';
+  s.textContent=starEmojis[i%starEmojis.length];
+  s.style.left=Math.random()*100+'%'; s.style.top=Math.random()*100+'%';
+  s.style.fontSize=(1.2+Math.random()*1.5)+'rem';
+  s.style.animationDelay=(Math.random()*4)+'s';
+  s.style.animationDuration=(3+Math.random()*3)+'s';
   bgStars.appendChild(s);
 }
 
@@ -152,54 +84,51 @@ async function loadNames() {
     const res = await fetch(SCRIPT_URL + '?t=' + Date.now());
     const data = await res.json();
     const names = data.names || [];
-
-    if (names.length > totalLoaded) {
-      const grid = document.getElementById('namesGrid');
-      const empty = grid.querySelector('.empty-state');
-
-      for (let i = totalLoaded; i < names.length; i++) {
-        // 숨긴 항목은 건너뜀
-        if (!hiddenIndexes.has(i)) {
-          if (empty) empty.remove();
-          addCard(names[i], i);
-        }
+    const grid = document.getElementById('namesGrid');
+    for (const d of names) {
+      if (!loadedRows.has(d.row)) {
+        loadedRows.add(d.row);
+        const empty = grid.querySelector('.empty-state');
+        if (empty) empty.remove();
+        addCard(d);
       }
-      totalLoaded = names.length;
     }
-
     updateCount();
-    document.getElementById('statusText').textContent =
-      '마지막 갱신: ' + new Date().toLocaleTimeString('ko-KR');
+    document.getElementById('statusText').textContent = '마지막 갱신: ' + new Date().toLocaleTimeString('ko-KR');
   } catch(e) {
     document.getElementById('statusText').textContent = '연결 오류 - 새로고침 버튼을 눌러봐요';
   }
 }
 
-function addCard(d, idx) {
+function addCard(d) {
   const grid = document.getElementById('namesGrid');
   const card = document.createElement('div');
   card.className = 'name-card';
-  card.dataset.idx = idx;
+  card.dataset.row = d.row;
   card.innerHTML =
-    '<button class="delete-btn" onclick="deleteCard(this)" title="이 카드 숨기기">✕</button>' +
+    '<button class="delete-btn" onclick="deleteCard(this)">✕</button>' +
     '<div class="card-top">' +
-      '<span class="card-grade">' + esc(d.grade||'') + ' ' + esc(d.num||'') + '번</span>' +
-      '<span class="card-mood">' + esc(d.mood||'') + '</span>' +
+      '<span class="card-grade">'+esc(d.grade||'')+' '+esc(d.num||'')+'번</span>' +
+      '<span class="card-mood">'+esc(d.mood||'')+'</span>' +
     '</div>' +
-    '<div class="card-name">' + esc(d.name||'') + '</div>' +
-    (d.memo ? '<div class="card-memo">💬 ' + esc(d.memo) + '</div>' : '');
+    '<div class="card-name">'+esc(d.name||'')+'</div>' +
+    (d.memo ? '<div class="card-memo">💬 '+esc(d.memo)+'</div>' : '');
   grid.appendChild(card);
 }
 
-function deleteCard(btn) {
+async function deleteCard(btn) {
   const card = btn.closest('.name-card');
   const name = card.querySelector('.card-name').textContent;
+  const row = card.dataset.row;
   if (!confirm(name + ' 카드를 지울까요?')) return;
 
-  const idx = parseInt(card.dataset.idx);
-  hiddenIndexes.add(idx);
-  // 세션에 저장 → 새로고침해도 안 나타남
-  sessionStorage.setItem('hiddenIndexes', JSON.stringify([...hiddenIndexes]));
+  // 시트에서 실제 삭제
+  try {
+    await fetch(SCRIPT_URL + '?action=deleterow&row=' + row, { mode:'no-cors' });
+  } catch(e) {}
+
+  // loadedRows에서도 제거 (재로딩 방지)
+  loadedRows.delete(parseInt(row));
 
   card.style.transition = 'all 0.3s';
   card.style.transform = 'scale(0)';
@@ -215,17 +144,14 @@ function deleteCard(btn) {
 }
 
 function updateCount() {
-  const count = document.querySelectorAll('.name-card').length;
-  document.getElementById('countBadge').textContent = count + '명 제출';
+  document.getElementById('countBadge').textContent = document.querySelectorAll('.name-card').length + '명 제출';
 }
 
 async function clearAll() {
   if (!confirm('모든 데이터를 지울까요?')) return;
   try {
     await fetch(SCRIPT_URL + '?action=clear');
-    hiddenIndexes.clear();
-    sessionStorage.removeItem('hiddenIndexes');
-    totalLoaded = 0;
+    loadedRows.clear();
     document.getElementById('namesGrid').innerHTML =
       '<div class="empty-state"><span class="emoji">⏳</span><p>아직 제출한 학생이 없어요</p></div>';
     document.getElementById('countBadge').textContent = '0명 제출';
