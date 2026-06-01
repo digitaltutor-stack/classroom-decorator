@@ -82,11 +82,9 @@ async function submitName() {
   msg.textContent = '저장 중...';
   msg.className = 'msg';
   try {
-    await fetch(SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      body: JSON.stringify({ name: name })
-    });
+    // GET 방식으로 변경 (no-cors 문제 우회)
+    const url = SCRIPT_URL + '?action=save&name=' + encodeURIComponent(name);
+    await fetch(url, { mode: 'no-cors' });
     document.getElementById('inputCard').style.display = 'none';
     document.getElementById('doneCard').style.display = 'flex';
     document.getElementById('doneName').textContent = name;
