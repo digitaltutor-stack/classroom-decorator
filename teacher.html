@@ -20,8 +20,7 @@
   .header-left p { font-size: 1rem; color: #aaa; margin-top: 2px; }
   .count-badge {
     background: linear-gradient(135deg, #ff6b9d, #ff9a3c);
-    border-radius: 50px; padding: 10px 24px;
-    font-size: 1.3rem; font-weight: bold;
+    border-radius: 50px; padding: 10px 24px; font-size: 1.3rem; font-weight: bold;
   }
   .controls { display: flex; gap: 10px; margin-bottom: 24px; }
   .ctrl-btn {
@@ -37,12 +36,11 @@
   .names-grid { display: flex; flex-wrap: wrap; gap: 16px; }
   .name-card {
     background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.15);
-    border-radius: 20px; padding: 20px 28px; text-align: center;
+    border-radius: 20px; padding: 24px 32px; text-align: center;
     animation: popIn 0.5s cubic-bezier(0.68,-0.55,0.27,1.55); min-width: 120px;
   }
   @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-  .name-text { font-size: 2rem; color: #fff; display: block; margin-bottom: 4px; }
-  .name-time { font-size: 0.8rem; color: #aaa; }
+  .name-text { font-size: 2rem; color: #fff; display: block; }
   .name-card:nth-child(6n+1) { border-color: #ff6b9d; background: rgba(255,107,157,0.12); }
   .name-card:nth-child(6n+2) { border-color: #ffd700; background: rgba(255,215,0,0.1); }
   .name-card:nth-child(6n+3) { border-color: #4fc3f7; background: rgba(79,195,247,0.1); }
@@ -81,12 +79,6 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdGODDgP2tjewoo1Hfr0qv64Z09xNBD71q2s1gO8LiezcOB4E32Zmd95bJH_fvgQJ-/exec';
 let shownCount = 0;
 
-function formatTime(raw) {
-  // 문자열이면 그대로, 숫자면 무시하고 현재 시각 표시
-  if (typeof raw === 'string' && raw.match(/^\d{2}:\d{2}/)) return raw;
-  return '';
-}
-
 async function loadNames() {
   try {
     const res = await fetch(SCRIPT_URL + '?t=' + Date.now());
@@ -99,9 +91,7 @@ async function loadNames() {
       for (let i = shownCount; i < names.length; i++) {
         const card = document.createElement('div');
         card.className = 'name-card';
-        const t = formatTime(names[i].time);
-        card.innerHTML = '<span class="name-text">' + escapeHtml(names[i].name) + '</span>' +
-          (t ? '<span class="name-time">' + t + '</span>' : '');
+        card.innerHTML = '<span class="name-text">' + escapeHtml(names[i].name) + '</span>';
         grid.appendChild(card);
       }
       shownCount = names.length;
