@@ -10,53 +10,103 @@
   body {
     min-height: 100vh;
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-    font-family: 'Jua', sans-serif; color: white; padding: 28px;
+    font-family: 'Jua', sans-serif;
+    color: white;
+    padding: 28px 36px;
+    display: flex;
+    flex-direction: column;
   }
+
   header {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+    margin-bottom: 24px; flex-wrap: wrap; gap: 16px;
   }
-  .header-left h1 { font-size: 1.8rem; color: #ffd700; }
-  .header-left p { font-size: 1rem; color: #aaa; margin-top: 2px; }
+  .header-left h1 { font-size: 2.4rem; color: #ffd700; }
+  .header-left p { font-size: 1.1rem; color: #aaa; margin-top: 4px; }
+
   .count-badge {
     background: linear-gradient(135deg, #ff6b9d, #ff9a3c);
-    border-radius: 50px; padding: 10px 24px; font-size: 1.3rem; font-weight: bold;
+    border-radius: 50px; padding: 12px 32px;
+    font-size: 1.8rem; font-weight: bold;
+    box-shadow: 0 4px 20px rgba(255,107,157,0.4);
   }
-  .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+
+  .controls { display: flex; gap: 14px; margin-bottom: 16px; align-items: center; }
   .ctrl-btn {
-    font-family: 'Jua', sans-serif; font-size: 1rem;
-    padding: 10px 20px; border: 2px solid rgba(255,255,255,0.2);
-    border-radius: 12px; background: rgba(255,255,255,0.08);
+    font-family: 'Jua', sans-serif; font-size: 1.2rem;
+    padding: 12px 24px; border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 14px; background: rgba(255,255,255,0.08);
     color: white; cursor: pointer;
   }
   .ctrl-btn.danger { border-color: rgba(255,80,80,0.4); color: #ff8080; }
-  .status { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; color: #aaa; margin-bottom: 20px; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; background: #4caf50; animation: pulse 1.5s infinite; }
+  .status {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 1rem; color: #aaa; margin-bottom: 20px;
+  }
+  .dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #4caf50; animation: pulse 1.5s infinite;
+  }
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
-  .names-grid { display: flex; flex-wrap: wrap; gap: 16px; }
+
+  /* 6칸 고정 그리드 */
+  .names-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 20px;
+    flex: 1;
+    min-height: 0;
+  }
+
   .name-card {
-    background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15);
-    border-radius: 20px; padding: 16px 20px; min-width: 160px;
+    background: rgba(255,255,255,0.08);
+    border: 3px solid rgba(255,255,255,0.15);
+    border-radius: 28px;
+    padding: 30px 36px;
     animation: popIn 0.5s cubic-bezier(0.68,-0.55,0.27,1.55);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
   }
   @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-  .card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-  .card-grade { font-size: 0.8rem; color: #aaa; }
-  .card-mood { font-size: 1.6rem; }
-  .card-name { font-size: 1.8rem; color: #fff; margin-bottom: 6px; }
-  .card-memo { font-size: 0.85rem; color: #ccc; line-height: 1.4; word-break: break-all; }
-  .name-card:nth-child(6n+1) { border-color: #ff6b9d; background: rgba(255,107,157,0.12); }
+
+  .card-top {
+    display: flex; align-items: center;
+    justify-content: space-between;
+  }
+  .card-grade { font-size: 1.4rem; color: #aaa; }
+  .card-mood { font-size: 3rem; }
+  .card-name { font-size: 4rem; color: #fff; line-height: 1.2; }
+  .card-memo {
+    font-size: 1.4rem; color: #ccc;
+    line-height: 1.6; word-break: break-all;
+    background: rgba(255,255,255,0.07);
+    border-radius: 12px; padding: 10px 16px;
+  }
+
+  .name-card:nth-child(6n+1) { border-color: #ff6b9d; background: rgba(255,107,157,0.14); }
   .name-card:nth-child(6n+2) { border-color: #ffd700; background: rgba(255,215,0,0.1); }
   .name-card:nth-child(6n+3) { border-color: #4fc3f7; background: rgba(79,195,247,0.1); }
   .name-card:nth-child(6n+4) { border-color: #a5d6a7; background: rgba(165,214,167,0.1); }
   .name-card:nth-child(6n+5) { border-color: #ffb74d; background: rgba(255,183,77,0.1); }
   .name-card:nth-child(6n+6) { border-color: #ce93d8; background: rgba(206,147,216,0.1); }
-  .empty-state { text-align: center; padding: 60px 20px; color: #555; width: 100%; }
-  .empty-state .emoji { font-size: 4rem; display: block; margin-bottom: 12px; }
-  .empty-state p { font-size: 1.2rem; }
+
+  .empty-state {
+    text-align: center;
+    grid-column: 1 / -1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: #444; gap: 20px;
+    padding: 60px 0;
+  }
+  .empty-state .emoji { font-size: 7rem; }
+  .empty-state p { font-size: 2rem; }
 </style>
 </head>
 <body>
+
 <header>
   <div class="header-left">
     <h1>👩‍🏫 선생님 화면</h1>
@@ -64,21 +114,24 @@
   </div>
   <div class="count-badge" id="countBadge">0명 제출</div>
 </header>
+
 <div class="controls">
   <button class="ctrl-btn" onclick="loadNames()">🔄 지금 새로고침</button>
   <button class="ctrl-btn danger" onclick="clearAll()">🗑️ 전체 지우기</button>
+  <div class="status" style="margin:0; margin-left:8px;">
+    <div class="dot"></div>
+    <span id="statusText">자동 새로고침 중...</span>
+  </div>
 </div>
-<div class="status">
-  <div class="dot"></div>
-  <span id="statusText">자동 새로고침 중...</span>
-</div>
+
 <div class="names-grid" id="namesGrid">
   <div class="empty-state">
     <span class="emoji">⏳</span>
     <p>아직 제출한 학생이 없어요</p>
-    <p>학생들이 제출하면 여기에 나타납니다!</p>
+    <p style="font-size:1.4rem; color:#333;">학생들이 QR을 찍고 이름을 쓰면 여기에 나타납니다!</p>
   </div>
 </div>
+
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdGODDgP2tjewoo1Hfr0qv64Z09xNBD71q2s1gO8LiezcOB4E32Zmd95bJH_fvgQJ-/exec';
 let shownCount = 0;
@@ -108,7 +161,8 @@ async function loadNames() {
       shownCount = names.length;
       document.getElementById('countBadge').textContent = shownCount + '명 제출';
     }
-    document.getElementById('statusText').textContent = '마지막 갱신: ' + new Date().toLocaleTimeString('ko-KR');
+    document.getElementById('statusText').textContent =
+      '마지막 갱신: ' + new Date().toLocaleTimeString('ko-KR');
   } catch(e) {
     document.getElementById('statusText').textContent = '연결 오류 - 새로고침 버튼을 눌러봐요';
   }
@@ -120,7 +174,7 @@ async function clearAll() {
     await fetch(SCRIPT_URL + '?action=clear');
     shownCount = 0;
     document.getElementById('namesGrid').innerHTML =
-      '<div class="empty-state"><span class="emoji">⏳</span><p>아직 제출한 학생이 없어요</p><p>학생들이 제출하면 여기에 나타납니다!</p></div>';
+      '<div class="empty-state"><span class="emoji">⏳</span><p>아직 제출한 학생이 없어요</p></div>';
     document.getElementById('countBadge').textContent = '0명 제출';
   } catch(e) { alert('오류가 발생했어요'); }
 }
