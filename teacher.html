@@ -22,34 +22,25 @@
     background: linear-gradient(135deg, #ff6b9d, #ff9a3c);
     border-radius: 50px; padding: 10px 24px;
     font-size: 1.3rem; font-weight: bold;
-    box-shadow: 0 4px 15px rgba(255,107,157,0.4);
   }
-  .controls { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; }
+  .controls { display: flex; gap: 10px; margin-bottom: 24px; }
   .ctrl-btn {
     font-family: 'Jua', sans-serif; font-size: 1rem;
     padding: 10px 20px; border: 2px solid rgba(255,255,255,0.2);
     border-radius: 12px; background: rgba(255,255,255,0.08);
-    color: white; cursor: pointer; transition: background 0.2s;
+    color: white; cursor: pointer;
   }
-  .ctrl-btn:hover { background: rgba(255,255,255,0.18); }
   .ctrl-btn.danger { border-color: rgba(255,80,80,0.4); color: #ff8080; }
-  .ctrl-btn.danger:hover { background: rgba(255,80,80,0.15); }
   .status { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; color: #aaa; margin-bottom: 20px; }
   .dot { width: 10px; height: 10px; border-radius: 50%; background: #4caf50; animation: pulse 1.5s infinite; }
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
   .names-grid { display: flex; flex-wrap: wrap; gap: 16px; }
   .name-card {
-    background: rgba(255,255,255,0.1);
-    border: 2px solid rgba(255,255,255,0.15);
-    border-radius: 20px; padding: 20px 28px;
-    text-align: center; position: relative;
-    animation: popIn 0.5s cubic-bezier(0.68,-0.55,0.27,1.55);
-    min-width: 120px;
+    background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 20px; padding: 20px 28px; text-align: center;
+    animation: popIn 0.5s cubic-bezier(0.68,-0.55,0.27,1.55); min-width: 120px;
   }
-  @keyframes popIn {
-    0% { transform: scale(0) rotate(-5deg); opacity: 0; }
-    100% { transform: scale(1) rotate(0deg); opacity: 1; }
-  }
+  @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
   .name-text { font-size: 2rem; color: #fff; display: block; margin-bottom: 4px; }
   .name-time { font-size: 0.8rem; color: #888; }
   .name-card:nth-child(6n+1) { border-color: #ff6b9d; background: rgba(255,107,157,0.12); }
@@ -87,66 +78,49 @@
   </div>
 </div>
 <script>
-  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7A98taJz8j_1WT2ggM5-GNXpjduMoDa_tHczL_LPizKnrLH2Lj8p8_lB1VYFKmJtbBA/exec';
-  let shownNames = new Set();
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdGODDgP2tjewoo1Hfr0qv64Z09xNBD71q2s1gO8LiezcOB4E32Zmd95bJH_fvgQJ-/exec';
+let shownCount = 0;
 
-  async function loadNames() {
-    try {
-      const res = await fetch(SCRIPT_URL + '?t=' + Date.now());
-      const data = await res.json();
-      const names = data.names || [];
-
-      // 새로 추가된 이름만 카드 추가
-      names.forEach((item, idx) => {
-        const key = item.name + '_' + idx;
-        if (!shownNames.has(key)) {
-          shownNames.add(key);
-          addCard(item.name, item.time);
-        }
-      });
-
-      document.getElementById('countBadge').textContent = names.length + '명 제출';
-      document.getElementById('statusText').textContent =
-        '마지막 갱신: ' + new Date().toLocaleTimeString('ko-KR');
-
-      if (names.length > 0) {
-        const empty = document.querySelector('.empty-state');
-        if (empty) empty.remove();
+async function loadNames() {
+  try {
+    const res = await fetch(SCRIPT_URL + '?t=' + Date.now());
+    const data = await res.json();
+    const names = data.names || [];
+    if (names.length > shownCount) {
+      const grid = document.getElementById('namesGrid');
+      const empty = grid.querySelector('.empty-state');
+      if (empty) empty.remove();
+      for (let i = shownCount; i < names.length; i++) {
+        const card = document.createElement('div');
+        card.className = 'name-card';
+        card.innerHTML = '<span class="name-text">' + escapeHtml(names[i].name) + '</span><span class="name-time">' + (names[i].time||'') + '</span>';
+        grid.appendChild(card);
       }
-    } catch(e) {
-      document.getElementById('statusText').textContent = '연결 오류 - 새로고침 버튼을 눌러봐요';
+      shownCount = names.length;
+      document.getElementById('countBadge').textContent = shownCount + '명 제출';
     }
+    document.getElementById('statusText').textContent = '마지막 갱신: ' + new Date().toLocaleTimeString('ko-KR');
+  } catch(e) {
+    document.getElementById('statusText').textContent = '연결 오류 - 새로고침 버튼을 눌러봐요';
   }
+}
 
-  function addCard(name, time) {
-    const grid = document.getElementById('namesGrid');
-    const card = document.createElement('div');
-    card.className = 'name-card';
-    card.innerHTML = `<span class="name-text">${escapeHtml(name)}</span><span class="name-time">${time||''}</span>`;
-    grid.appendChild(card);
-  }
+async function clearAll() {
+  if (!confirm('모든 이름을 지울까요?')) return;
+  try {
+    await fetch(SCRIPT_URL + '?action=clear');
+    shownCount = 0;
+    document.getElementById('namesGrid').innerHTML = '<div class="empty-state"><span class="emoji">⏳</span><p>아직 제출한 학생이 없어요</p><p>학생들이 이름을 쓰면 여기에 나타납니다!</p></div>';
+    document.getElementById('countBadge').textContent = '0명 제출';
+  } catch(e) { alert('오류가 발생했어요'); }
+}
 
-  async function clearAll() {
-    if (!confirm('모든 이름을 지울까요?')) return;
-    try {
-      await fetch(SCRIPT_URL + '?action=clear');
-      shownNames.clear();
-      document.getElementById('namesGrid').innerHTML = `
-        <div class="empty-state">
-          <span class="emoji">⏳</span>
-          <p>아직 제출한 학생이 없어요</p>
-          <p>학생들이 이름을 쓰면 여기에 나타납니다!</p>
-        </div>`;
-      document.getElementById('countBadge').textContent = '0명 제출';
-    } catch(e) { alert('삭제 오류가 발생했어요'); }
-  }
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
-  function escapeHtml(str) {
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
-  loadNames();
-  setInterval(loadNames, 5000);
+loadNames();
+setInterval(loadNames, 5000);
 </script>
 </body>
 </html>
