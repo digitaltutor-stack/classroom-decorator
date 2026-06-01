@@ -7,187 +7,342 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
+
   body {
     min-height: 100vh;
     background: linear-gradient(135deg, #fff9c4 0%, #ffe0f0 50%, #c8f0ff 100%);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    font-family: 'Jua', sans-serif; padding: 20px;
+    font-family: 'Jua', sans-serif;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
   }
-  .card {
-    background: rgba(255,255,255,0.95); border-radius: 28px;
-    padding: 28px 28px; width: 100%; max-width: 460px;
-    box-shadow: 0 8px 40px rgba(255,150,180,0.2);
+
+  /* 아이패드 가로 — 2단 레이아웃 */
+  .layout {
+    display: flex;
+    gap: 24px;
+    width: 100%;
+    max-width: 1024px;
+    align-items: flex-start;
+  }
+
+  /* 왼쪽: 키보드 + 타이틀 */
+  .left-panel {
+    flex: 0 0 340px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .keyboard-card {
+    background: rgba(255,255,255,0.9);
+    border-radius: 24px;
+    padding: 20px;
+    border: 2px solid rgba(255,200,220,0.5);
+    width: 100%;
+    text-align: center;
+  }
+
+  .keyboard-card h1 {
+    color: #ff6b9d;
+    font-size: 2rem;
+    margin-top: 12px;
+    margin-bottom: 4px;
+  }
+
+  .keyboard-card p {
+    color: #aaa;
+    font-size: 1.1rem;
+  }
+
+  /* 오른쪽: 입력 폼 */
+  .right-panel {
+    flex: 1;
+    background: rgba(255,255,255,0.95);
+    border-radius: 28px;
+    padding: 28px 32px;
     border: 2.5px solid rgba(255,200,220,0.5);
+    box-shadow: 0 8px 40px rgba(255,150,180,0.2);
   }
-  .keyboard-wrap { display: flex; justify-content: center; margin-bottom: 14px; }
-  h1 { text-align: center; color: #ff6b9d; font-size: 1.6rem; margin-bottom: 4px; }
-  .subtitle { text-align: center; color: #aaa; font-size: 0.95rem; margin-bottom: 18px; }
-  .label { font-size: 0.85rem; color: #bbb; margin-bottom: 6px; display: block; }
-  .grade-wrap { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+
+  .label {
+    font-size: 1.1rem;
+    color: #bbb;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  /* 학년 버튼 */
+  .grade-wrap {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
   .grade-btn {
-    font-family: 'Jua', sans-serif; font-size: 0.9rem;
-    padding: 7px 13px; border: 2.5px solid #eee;
-    border-radius: 50px; background: white; color: #aaa; cursor: pointer;
+    font-family: 'Jua', sans-serif;
+    font-size: 1.2rem;
+    padding: 10px 20px;
+    border: 2.5px solid #eee;
+    border-radius: 50px;
+    background: white;
+    color: #aaa;
+    cursor: pointer;
   }
-  .grade-btn.active { border-color: #ff6b9d; color: #ff6b9d; background: #fff0f5; }
-  input[type="number"], input[type="text"] {
-    width: 100%; font-family: 'Jua', sans-serif;
-    font-size: 1.5rem; text-align: center;
-    border: 3px solid #ffb3cc; border-radius: 14px;
-    padding: 12px; background: #fff9fb; color: #333;
-    outline: none; margin-bottom: 14px;
+  .grade-btn.active {
+    border-color: #ff6b9d;
+    color: #ff6b9d;
+    background: #fff0f5;
   }
-  input[type="text"] { font-size: 1.8rem; letter-spacing: 4px; }
+
+  /* 번호 + 이름 한 줄 */
+  .row { display: flex; gap: 12px; margin-bottom: 20px; }
+
+  input[type="number"] {
+    font-family: 'Jua', sans-serif;
+    font-size: 2rem;
+    text-align: center;
+    border: 3px solid #ffb3cc;
+    border-radius: 16px;
+    padding: 14px;
+    background: #fff9fb;
+    color: #333;
+    outline: none;
+    width: 130px;
+    flex-shrink: 0;
+  }
+
+  input[type="text"] {
+    font-family: 'Jua', sans-serif;
+    font-size: 2rem;
+    text-align: center;
+    border: 3px solid #ffb3cc;
+    border-radius: 16px;
+    padding: 14px;
+    background: #fff9fb;
+    color: #333;
+    outline: none;
+    flex: 1;
+    letter-spacing: 4px;
+  }
+
   input:focus { border-color: #ff6b9d; }
-  input::placeholder { color: #ffb3cc; font-size: 1rem; letter-spacing: 0; }
+  input::placeholder { color: #ffb3cc; font-size: 1.2rem; letter-spacing: 0; }
+
   textarea {
-    width: 100%; font-family: 'Jua', sans-serif; font-size: 1.1rem;
-    border: 3px solid #ffb3cc; border-radius: 14px;
-    padding: 14px; background: #fff9fb; color: #333;
-    outline: none; margin-bottom: 14px; resize: none; height: 80px; line-height: 1.6;
+    width: 100%;
+    font-family: 'Jua', sans-serif;
+    font-size: 1.2rem;
+    border: 3px solid #ffb3cc;
+    border-radius: 16px;
+    padding: 14px;
+    background: #fff9fb;
+    color: #333;
+    outline: none;
+    resize: none;
+    height: 90px;
+    line-height: 1.6;
+    margin-bottom: 20px;
   }
   textarea:focus { border-color: #ff6b9d; }
-  textarea::placeholder { color: #ffb3cc; font-size: 0.95rem; }
-  .mood-wrap { display: flex; justify-content: space-around; margin-bottom: 18px; }
-  .mood-btn {
-    font-size: 2rem; background: none; border: 3px solid transparent;
-    border-radius: 50%; width: 52px; height: 52px; cursor: pointer;
+  textarea::placeholder { color: #ffb3cc; font-size: 1rem; }
+
+  /* 기분 */
+  .mood-wrap {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
   }
-  .mood-btn.active { border-color: #ff6b9d; background: #fff0f5; }
+
+  .mood-btn {
+    font-size: 2.6rem;
+    background: none;
+    border: 3px solid transparent;
+    border-radius: 50%;
+    width: 66px;
+    height: 66px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .mood-btn.active {
+    border-color: #ff6b9d;
+    background: #fff0f5;
+  }
+
   .submit-btn {
-    width: 100%; font-family: 'Jua', sans-serif;
-    font-size: 1.5rem; padding: 16px; border: none;
-    border-radius: 18px;
+    width: 100%;
+    font-family: 'Jua', sans-serif;
+    font-size: 1.8rem;
+    padding: 18px;
+    border: none;
+    border-radius: 20px;
     background: linear-gradient(135deg, #ff6b9d, #ff9a3c);
-    color: white; cursor: pointer; letter-spacing: 2px;
+    color: white;
+    cursor: pointer;
+    letter-spacing: 2px;
   }
   .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+
   .msg { margin-top: 10px; font-size: 1rem; color: #aaa; text-align: center; min-height: 20px; }
   .msg.error { color: #ff4444; }
-  .done-screen { display: none; flex-direction: column; align-items: center; gap: 16px; text-align: center; }
-  .done-emoji { font-size: 5rem; }
-  .done-name { font-size: 3rem; color: #ff6b9d; }
-  .done-msg { font-size: 1.4rem; color: #555; }
+
+  /* 완료 화면 */
+  .done-screen {
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 20px; text-align: center;
+    min-height: 60vh;
+  }
+  .done-emoji { font-size: 7rem; }
+  .done-name { font-size: 4rem; color: #ff6b9d; }
+  .done-msg { font-size: 1.8rem; color: #555; }
   .retry-btn {
-    font-family: 'Jua', sans-serif; font-size: 1.1rem;
-    padding: 12px 28px; border: 3px solid #ffb3cc;
-    border-radius: 50px; background: white; color: #ff6b9d; cursor: pointer;
+    font-family: 'Jua', sans-serif;
+    font-size: 1.2rem;
+    padding: 14px 32px;
+    border: 3px solid #ffb3cc;
+    border-radius: 50px;
+    background: white;
+    color: #ff6b9d;
+    cursor: pointer;
+  }
+
+  /* 모바일 세로일 때는 1단 */
+  @media (max-width: 700px) {
+    .layout { flex-direction: column; }
+    .left-panel { flex: unset; width: 100%; }
+    .keyboard-card svg { width: 100%; height: auto; }
   }
 </style>
 </head>
 <body>
-<div class="card" id="inputCard">
-  <div class="keyboard-wrap">
-    <svg width="360" height="120" viewBox="0 0 400 130" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="2" width="396" height="126" rx="14" fill="#ffd6e7" stroke="#ffb3cc" stroke-width="2"/>
-      <rect x="8" y="8" width="384" height="114" rx="10" fill="#fff0f5"/>
-      <g font-family="sans-serif" font-size="7.5" text-anchor="middle">
-        <g fill="white" stroke="#ffb3cc" stroke-width="1">
-          <rect x="14" y="14" width="26" height="18" rx="4"/><text x="27" y="27" fill="#ff6b9d">1</text>
-          <rect x="42" y="14" width="26" height="18" rx="4"/><text x="55" y="27" fill="#ff6b9d">2</text>
-          <rect x="70" y="14" width="26" height="18" rx="4"/><text x="83" y="27" fill="#ff6b9d">3</text>
-          <rect x="98" y="14" width="26" height="18" rx="4"/><text x="111" y="27" fill="#ff6b9d">4</text>
-          <rect x="126" y="14" width="26" height="18" rx="4"/><text x="139" y="27" fill="#ff6b9d">5</text>
-          <rect x="154" y="14" width="26" height="18" rx="4"/><text x="167" y="27" fill="#ff6b9d">6</text>
-          <rect x="182" y="14" width="26" height="18" rx="4"/><text x="195" y="27" fill="#ff6b9d">7</text>
-          <rect x="210" y="14" width="26" height="18" rx="4"/><text x="223" y="27" fill="#ff6b9d">8</text>
-          <rect x="238" y="14" width="26" height="18" rx="4"/><text x="251" y="27" fill="#ff6b9d">9</text>
-          <rect x="266" y="14" width="26" height="18" rx="4"/><text x="279" y="27" fill="#ff6b9d">0</text>
-          <rect x="294" y="14" width="26" height="18" rx="4"/><text x="307" y="27" fill="#ff6b9d">-</text>
-          <rect x="322" y="14" width="64" height="18" rx="4" fill="#ffe0ee"/><text x="354" y="27" fill="#ff6b9d">⌫ Del</text>
+
+<!-- 입력 화면 -->
+<div class="layout" id="inputWrap">
+
+  <!-- 왼쪽 패널 -->
+  <div class="left-panel">
+    <div class="keyboard-card">
+      <svg width="300" height="122" viewBox="0 0 400 130" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="396" height="126" rx="14" fill="#ffd6e7" stroke="#ffb3cc" stroke-width="2"/>
+        <rect x="8" y="8" width="384" height="114" rx="10" fill="#fff0f5"/>
+        <g font-family="sans-serif" font-size="7.5" text-anchor="middle">
+          <g fill="white" stroke="#ffb3cc" stroke-width="1">
+            <rect x="14" y="14" width="26" height="18" rx="4"/><text x="27" y="27" fill="#ff6b9d">1</text>
+            <rect x="42" y="14" width="26" height="18" rx="4"/><text x="55" y="27" fill="#ff6b9d">2</text>
+            <rect x="70" y="14" width="26" height="18" rx="4"/><text x="83" y="27" fill="#ff6b9d">3</text>
+            <rect x="98" y="14" width="26" height="18" rx="4"/><text x="111" y="27" fill="#ff6b9d">4</text>
+            <rect x="126" y="14" width="26" height="18" rx="4"/><text x="139" y="27" fill="#ff6b9d">5</text>
+            <rect x="154" y="14" width="26" height="18" rx="4"/><text x="167" y="27" fill="#ff6b9d">6</text>
+            <rect x="182" y="14" width="26" height="18" rx="4"/><text x="195" y="27" fill="#ff6b9d">7</text>
+            <rect x="210" y="14" width="26" height="18" rx="4"/><text x="223" y="27" fill="#ff6b9d">8</text>
+            <rect x="238" y="14" width="26" height="18" rx="4"/><text x="251" y="27" fill="#ff6b9d">9</text>
+            <rect x="266" y="14" width="26" height="18" rx="4"/><text x="279" y="27" fill="#ff6b9d">0</text>
+            <rect x="294" y="14" width="26" height="18" rx="4"/><text x="307" y="27" fill="#ff6b9d">-</text>
+            <rect x="322" y="14" width="64" height="18" rx="4" fill="#ffe0ee"/><text x="354" y="27" fill="#ff6b9d">⌫ Del</text>
+          </g>
+          <g fill="white" stroke="#ffb3cc" stroke-width="1">
+            <rect x="14" y="36" width="34" height="18" rx="4" fill="#ffe0ee"/><text x="31" y="49" fill="#ff6b9d">Tab</text>
+            <rect x="50" y="36" width="26" height="18" rx="4"/><text x="63" y="49" fill="#ff6b9d">ㅂ</text>
+            <rect x="78" y="36" width="26" height="18" rx="4"/><text x="91" y="49" fill="#ff6b9d">ㅈ</text>
+            <rect x="106" y="36" width="26" height="18" rx="4"/><text x="119" y="49" fill="#ff6b9d">ㄷ</text>
+            <rect x="134" y="36" width="26" height="18" rx="4"/><text x="147" y="49" fill="#ff6b9d">ㄱ</text>
+            <rect x="162" y="36" width="26" height="18" rx="4"/><text x="175" y="49" fill="#ff6b9d">ㅅ</text>
+            <rect x="190" y="36" width="26" height="18" rx="4"/><text x="203" y="49" fill="#ff6b9d">ㅛ</text>
+            <rect x="218" y="36" width="26" height="18" rx="4"/><text x="231" y="49" fill="#ff6b9d">ㅕ</text>
+            <rect x="246" y="36" width="26" height="18" rx="4"/><text x="259" y="49" fill="#ff6b9d">ㅑ</text>
+            <rect x="274" y="36" width="26" height="18" rx="4"/><text x="287" y="49" fill="#ff6b9d">ㅐ</text>
+            <rect x="302" y="36" width="26" height="18" rx="4"/><text x="315" y="49" fill="#ff6b9d">ㅔ</text>
+            <rect x="330" y="36" width="56" height="40" rx="4" fill="#ffcce0" stroke="#ff9abc" stroke-width="1.5"/>
+            <text x="358" y="60" fill="#ff6b9d" font-size="9" font-weight="bold">Enter</text>
+          </g>
+          <g fill="white" stroke="#ffb3cc" stroke-width="1">
+            <rect x="14" y="58" width="38" height="18" rx="4" fill="#ffe0ee"/><text x="33" y="71" fill="#ff6b9d">Caps</text>
+            <rect x="54" y="58" width="26" height="18" rx="4"/><text x="67" y="71" fill="#ff6b9d">ㅁ</text>
+            <rect x="82" y="58" width="26" height="18" rx="4"/><text x="95" y="71" fill="#ff6b9d">ㄴ</text>
+            <rect x="110" y="58" width="26" height="18" rx="4"/><text x="123" y="71" fill="#ff6b9d">ㅇ</text>
+            <rect x="138" y="58" width="26" height="18" rx="4"/><text x="151" y="71" fill="#ff6b9d">ㄹ</text>
+            <rect x="166" y="58" width="26" height="18" rx="4"/><text x="179" y="71" fill="#ff6b9d">ㅎ</text>
+            <rect x="194" y="58" width="26" height="18" rx="4"/><text x="207" y="71" fill="#ff6b9d">ㅗ</text>
+            <rect x="222" y="58" width="26" height="18" rx="4"/><text x="235" y="71" fill="#ff6b9d">ㅓ</text>
+            <rect x="250" y="58" width="26" height="18" rx="4"/><text x="263" y="71" fill="#ff6b9d">ㅏ</text>
+            <rect x="278" y="58" width="26" height="18" rx="4"/><text x="291" y="71" fill="#ff6b9d">ㅣ</text>
+            <rect x="306" y="58" width="22" height="18" rx="4"/><text x="317" y="71" fill="#ff6b9d">; :</text>
+          </g>
+          <g fill="white" stroke="#ffb3cc" stroke-width="1">
+            <rect x="14" y="80" width="44" height="18" rx="4" fill="#ffe0ee"/><text x="36" y="93" fill="#ff6b9d">Shift</text>
+            <rect x="60" y="80" width="26" height="18" rx="4"/><text x="73" y="93" fill="#ff6b9d">ㅋ</text>
+            <rect x="88" y="80" width="26" height="18" rx="4"/><text x="101" y="93" fill="#ff6b9d">ㅌ</text>
+            <rect x="116" y="80" width="26" height="18" rx="4"/><text x="129" y="93" fill="#ff6b9d">ㅊ</text>
+            <rect x="144" y="80" width="26" height="18" rx="4"/><text x="157" y="93" fill="#ff6b9d">ㅍ</text>
+            <rect x="172" y="80" width="26" height="18" rx="4"/><text x="185" y="93" fill="#ff6b9d">ㅠ</text>
+            <rect x="200" y="80" width="26" height="18" rx="4"/><text x="213" y="93" fill="#ff6b9d">ㅡ</text>
+            <rect x="228" y="80" width="26" height="18" rx="4"/><text x="241" y="93" fill="#ff6b9d">ㅜ</text>
+            <rect x="256" y="80" width="26" height="18" rx="4"/><text x="269" y="93" fill="#ff6b9d">ㅢ</text>
+            <rect x="284" y="80" width="26" height="18" rx="4"/><text x="297" y="93" fill="#ff6b9d">,</text>
+            <rect x="312" y="80" width="26" height="18" rx="4"/><text x="325" y="93" fill="#ff6b9d">.</text>
+            <rect x="340" y="80" width="46" height="18" rx="4" fill="#ffe0ee"/><text x="363" y="93" fill="#ff6b9d">Shift</text>
+          </g>
+          <g fill="white" stroke="#ffb3cc" stroke-width="1">
+            <rect x="14" y="102" width="36" height="18" rx="4" fill="#ffe0ee"/><text x="32" y="115" fill="#ff6b9d" font-size="6.5">Ctrl</text>
+            <rect x="52" y="102" width="30" height="18" rx="4" fill="#ffe0ee"/><text x="67" y="115" fill="#ff6b9d" font-size="6">한/영</text>
+            <rect x="84" y="102" width="24" height="18" rx="4" fill="#ffe0ee"/><text x="96" y="115" fill="#ff6b9d" font-size="6.5">Alt</text>
+            <rect x="110" y="102" width="168" height="18" rx="6" fill="#ffcce0" stroke="#ff9abc" stroke-width="1.5"/><text x="194" y="115" fill="#ff6b9d" font-size="8">Space</text>
+            <rect x="280" y="102" width="24" height="18" rx="4" fill="#ffe0ee"/><text x="292" y="115" fill="#ff6b9d" font-size="6.5">Alt</text>
+            <rect x="306" y="102" width="30" height="18" rx="4" fill="#ffe0ee"/><text x="321" y="115" fill="#ff6b9d" font-size="6">한자</text>
+            <rect x="338" y="102" width="48" height="18" rx="4" fill="#ffe0ee"/><text x="362" y="115" fill="#ff6b9d" font-size="6.5">Ctrl</text>
+          </g>
         </g>
-        <g fill="white" stroke="#ffb3cc" stroke-width="1">
-          <rect x="14" y="36" width="34" height="18" rx="4" fill="#ffe0ee"/><text x="31" y="49" fill="#ff6b9d">Tab</text>
-          <rect x="50" y="36" width="26" height="18" rx="4"/><text x="63" y="49" fill="#ff6b9d">ㅂ</text>
-          <rect x="78" y="36" width="26" height="18" rx="4"/><text x="91" y="49" fill="#ff6b9d">ㅈ</text>
-          <rect x="106" y="36" width="26" height="18" rx="4"/><text x="119" y="49" fill="#ff6b9d">ㄷ</text>
-          <rect x="134" y="36" width="26" height="18" rx="4"/><text x="147" y="49" fill="#ff6b9d">ㄱ</text>
-          <rect x="162" y="36" width="26" height="18" rx="4"/><text x="175" y="49" fill="#ff6b9d">ㅅ</text>
-          <rect x="190" y="36" width="26" height="18" rx="4"/><text x="203" y="49" fill="#ff6b9d">ㅛ</text>
-          <rect x="218" y="36" width="26" height="18" rx="4"/><text x="231" y="49" fill="#ff6b9d">ㅕ</text>
-          <rect x="246" y="36" width="26" height="18" rx="4"/><text x="259" y="49" fill="#ff6b9d">ㅑ</text>
-          <rect x="274" y="36" width="26" height="18" rx="4"/><text x="287" y="49" fill="#ff6b9d">ㅐ</text>
-          <rect x="302" y="36" width="26" height="18" rx="4"/><text x="315" y="49" fill="#ff6b9d">ㅔ</text>
-          <rect x="330" y="36" width="56" height="40" rx="4" fill="#ffcce0" stroke="#ff9abc" stroke-width="1.5"/>
-          <text x="358" y="60" fill="#ff6b9d" font-size="9" font-weight="bold">Enter</text>
-        </g>
-        <g fill="white" stroke="#ffb3cc" stroke-width="1">
-          <rect x="14" y="58" width="38" height="18" rx="4" fill="#ffe0ee"/><text x="33" y="71" fill="#ff6b9d">Caps</text>
-          <rect x="54" y="58" width="26" height="18" rx="4"/><text x="67" y="71" fill="#ff6b9d">ㅁ</text>
-          <rect x="82" y="58" width="26" height="18" rx="4"/><text x="95" y="71" fill="#ff6b9d">ㄴ</text>
-          <rect x="110" y="58" width="26" height="18" rx="4"/><text x="123" y="71" fill="#ff6b9d">ㅇ</text>
-          <rect x="138" y="58" width="26" height="18" rx="4"/><text x="151" y="71" fill="#ff6b9d">ㄹ</text>
-          <rect x="166" y="58" width="26" height="18" rx="4"/><text x="179" y="71" fill="#ff6b9d">ㅎ</text>
-          <rect x="194" y="58" width="26" height="18" rx="4"/><text x="207" y="71" fill="#ff6b9d">ㅗ</text>
-          <rect x="222" y="58" width="26" height="18" rx="4"/><text x="235" y="71" fill="#ff6b9d">ㅓ</text>
-          <rect x="250" y="58" width="26" height="18" rx="4"/><text x="263" y="71" fill="#ff6b9d">ㅏ</text>
-          <rect x="278" y="58" width="26" height="18" rx="4"/><text x="291" y="71" fill="#ff6b9d">ㅣ</text>
-          <rect x="306" y="58" width="22" height="18" rx="4"/><text x="317" y="71" fill="#ff6b9d">; :</text>
-        </g>
-        <g fill="white" stroke="#ffb3cc" stroke-width="1">
-          <rect x="14" y="80" width="44" height="18" rx="4" fill="#ffe0ee"/><text x="36" y="93" fill="#ff6b9d">Shift</text>
-          <rect x="60" y="80" width="26" height="18" rx="4"/><text x="73" y="93" fill="#ff6b9d">ㅋ</text>
-          <rect x="88" y="80" width="26" height="18" rx="4"/><text x="101" y="93" fill="#ff6b9d">ㅌ</text>
-          <rect x="116" y="80" width="26" height="18" rx="4"/><text x="129" y="93" fill="#ff6b9d">ㅊ</text>
-          <rect x="144" y="80" width="26" height="18" rx="4"/><text x="157" y="93" fill="#ff6b9d">ㅍ</text>
-          <rect x="172" y="80" width="26" height="18" rx="4"/><text x="185" y="93" fill="#ff6b9d">ㅠ</text>
-          <rect x="200" y="80" width="26" height="18" rx="4"/><text x="213" y="93" fill="#ff6b9d">ㅡ</text>
-          <rect x="228" y="80" width="26" height="18" rx="4"/><text x="241" y="93" fill="#ff6b9d">ㅜ</text>
-          <rect x="256" y="80" width="26" height="18" rx="4"/><text x="269" y="93" fill="#ff6b9d">ㅢ</text>
-          <rect x="284" y="80" width="26" height="18" rx="4"/><text x="297" y="93" fill="#ff6b9d">,</text>
-          <rect x="312" y="80" width="26" height="18" rx="4"/><text x="325" y="93" fill="#ff6b9d">.</text>
-          <rect x="340" y="80" width="46" height="18" rx="4" fill="#ffe0ee"/><text x="363" y="93" fill="#ff6b9d">Shift</text>
-        </g>
-        <g fill="white" stroke="#ffb3cc" stroke-width="1">
-          <rect x="14" y="102" width="36" height="18" rx="4" fill="#ffe0ee"/><text x="32" y="115" fill="#ff6b9d" font-size="6.5">Ctrl</text>
-          <rect x="52" y="102" width="30" height="18" rx="4" fill="#ffe0ee"/><text x="67" y="115" fill="#ff6b9d" font-size="6">한/영</text>
-          <rect x="84" y="102" width="24" height="18" rx="4" fill="#ffe0ee"/><text x="96" y="115" fill="#ff6b9d" font-size="6.5">Alt</text>
-          <rect x="110" y="102" width="168" height="18" rx="6" fill="#ffcce0" stroke="#ff9abc" stroke-width="1.5"/><text x="194" y="115" fill="#ff6b9d" font-size="8">Space</text>
-          <rect x="280" y="102" width="24" height="18" rx="4" fill="#ffe0ee"/><text x="292" y="115" fill="#ff6b9d" font-size="6.5">Alt</text>
-          <rect x="306" y="102" width="30" height="18" rx="4" fill="#ffe0ee"/><text x="321" y="115" fill="#ff6b9d" font-size="6">한자</text>
-          <rect x="338" y="102" width="48" height="18" rx="4" fill="#ffe0ee"/><text x="362" y="115" fill="#ff6b9d" font-size="6.5">Ctrl</text>
-        </g>
-      </g>
-    </svg>
+      </svg>
+      <h1>내 이름 써보기</h1>
+      <p>키보드로 입력해봐요!</p>
+    </div>
   </div>
 
-  <h1>내 이름 써보기</h1>
-  <p class="subtitle">키보드로 내 이름을 입력해봐요!</p>
+  <!-- 오른쪽 입력 폼 -->
+  <div class="right-panel">
 
-  <span class="label">학년</span>
-  <div class="grade-wrap">
-    <button class="grade-btn active" onclick="selectGrade(this,'1학년')">1학년</button>
-    <button class="grade-btn" onclick="selectGrade(this,'2학년')">2학년</button>
-    <button class="grade-btn" onclick="selectGrade(this,'3학년')">3학년</button>
-    <button class="grade-btn" onclick="selectGrade(this,'4학년')">4학년</button>
-    <button class="grade-btn" onclick="selectGrade(this,'5학년')">5학년</button>
-    <button class="grade-btn" onclick="selectGrade(this,'6학년')">6학년</button>
+    <span class="label">학년</span>
+    <div class="grade-wrap">
+      <button class="grade-btn active" onclick="selectGrade(this,'1학년')">1학년</button>
+      <button class="grade-btn" onclick="selectGrade(this,'2학년')">2학년</button>
+      <button class="grade-btn" onclick="selectGrade(this,'3학년')">3학년</button>
+      <button class="grade-btn" onclick="selectGrade(this,'4학년')">4학년</button>
+      <button class="grade-btn" onclick="selectGrade(this,'5학년')">5학년</button>
+      <button class="grade-btn" onclick="selectGrade(this,'6학년')">6학년</button>
+    </div>
+
+    <div class="row">
+      <div>
+        <span class="label">번호</span>
+        <input type="number" id="numInput" min="1" max="40" placeholder="번호">
+      </div>
+      <div style="flex:1">
+        <span class="label">이름</span>
+        <input type="text" id="nameInput" placeholder="이름" maxlength="10" autocomplete="off">
+      </div>
+    </div>
+
+    <span class="label">✏️ 하고 싶은 말</span>
+    <textarea id="msgInput" placeholder="선생님께 하고 싶은 말을 자유롭게 써봐요!"></textarea>
+
+    <span class="label">오늘 기분은?</span>
+    <div class="mood-wrap">
+      <button class="mood-btn active" onclick="selectMood(this,'😊')">😊</button>
+      <button class="mood-btn" onclick="selectMood(this,'😄')">😄</button>
+      <button class="mood-btn" onclick="selectMood(this,'😐')">😐</button>
+      <button class="mood-btn" onclick="selectMood(this,'😴')">😴</button>
+      <button class="mood-btn" onclick="selectMood(this,'😢')">😢</button>
+    </div>
+
+    <button class="submit-btn" id="submitBtn" onclick="submitName()">✅ 다 썼어요!</button>
+    <p class="msg" id="msg"></p>
   </div>
-
-  <span class="label">번호</span>
-  <input type="number" id="numInput" min="1" max="40" placeholder="번호">
-
-  <span class="label">이름</span>
-  <input type="text" id="nameInput" placeholder="이름을 써보세요" maxlength="10" autocomplete="off">
-
-  <span class="label">✏️ 하고 싶은 말</span>
-  <textarea id="msgInput" placeholder="선생님께 하고 싶은 말을 자유롭게 써봐요!"></textarea>
-
-  <span class="label">오늘 기분은?</span>
-  <div class="mood-wrap">
-    <button class="mood-btn active" onclick="selectMood(this,'😊')">😊</button>
-    <button class="mood-btn" onclick="selectMood(this,'😄')">😄</button>
-    <button class="mood-btn" onclick="selectMood(this,'😐')">😐</button>
-    <button class="mood-btn" onclick="selectMood(this,'😴')">😴</button>
-    <button class="mood-btn" onclick="selectMood(this,'😢')">😢</button>
-  </div>
-
-  <button class="submit-btn" id="submitBtn" onclick="submitName()">✅ 다 썼어요!</button>
-  <p class="msg" id="msg"></p>
 </div>
 
-<div class="card done-screen" id="doneCard">
+<!-- 완료 화면 -->
+<div class="done-screen" id="doneCard">
   <span class="done-emoji">🎉</span>
   <p class="done-msg">내 이름은</p>
   <div class="done-name" id="doneName"></div>
@@ -214,29 +369,21 @@ function selectMood(btn, mood) {
 
 async function submitName() {
   const name = document.getElementById('nameInput').value.trim();
-  const num = document.getElementById('numInput').value.trim();
+  const num  = document.getElementById('numInput').value.trim();
   const memo = document.getElementById('msgInput').value.trim();
-  const msg = document.getElementById('msg');
+  const msg  = document.getElementById('msg');
 
   if (!name) { msg.textContent = '이름을 입력해주세요! 😊'; msg.className = 'msg error'; return; }
   if (name.length < 2) { msg.textContent = '이름을 두 글자 이상 써봐요!'; msg.className = 'msg error'; return; }
   if (!num) { msg.textContent = '번호를 입력해주세요!'; msg.className = 'msg error'; return; }
 
   document.getElementById('submitBtn').disabled = true;
-  msg.textContent = '저장 중...';
-  msg.className = 'msg';
+  msg.textContent = '저장 중...'; msg.className = 'msg';
 
   try {
-    const params = new URLSearchParams({
-      action: 'save',
-      name: name,
-      grade: selectedGrade,
-      num: num,
-      mood: selectedMood,
-      memo: memo
-    });
+    const params = new URLSearchParams({ action:'save', name, grade:selectedGrade, num, mood:selectedMood, memo });
     await fetch(SCRIPT_URL + '?' + params.toString(), { mode: 'no-cors' });
-    document.getElementById('inputCard').style.display = 'none';
+    document.getElementById('inputWrap').style.display = 'none';
     document.getElementById('doneCard').style.display = 'flex';
     document.getElementById('doneName').textContent = name;
   } catch(e) {
@@ -248,7 +395,7 @@ async function submitName() {
 
 function retry() {
   document.getElementById('doneCard').style.display = 'none';
-  document.getElementById('inputCard').style.display = 'block';
+  document.getElementById('inputWrap').style.display = 'flex';
   document.getElementById('nameInput').value = '';
   document.getElementById('numInput').value = '';
   document.getElementById('msgInput').value = '';
