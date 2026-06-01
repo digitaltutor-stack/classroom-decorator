@@ -7,7 +7,6 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   body {
     min-height: 100vh;
     background: linear-gradient(135deg, #fff9c4 0%, #ffe0f0 50%, #c8f0ff 100%);
@@ -15,9 +14,8 @@
     padding: 28px 36px;
     display: flex; flex-direction: column;
   }
-
-  .bg-stars { position: fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; overflow:hidden; }
-  .bg-star { position:absolute; animation: floatStar 4s ease-in-out infinite; opacity:0.4; }
+  .bg-stars { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0; overflow:hidden; }
+  .bg-star { position:absolute; animation:floatStar 4s ease-in-out infinite; opacity:0.4; }
   @keyframes floatStar { 0%,100%{transform:translateY(0) rotate(0deg);} 50%{transform:translateY(-18px) rotate(12deg);} }
 
   header {
@@ -33,7 +31,6 @@
     font-size:1.8rem; color:white;
     box-shadow:0 4px 20px rgba(255,107,157,0.35);
   }
-
   .controls { position:relative; z-index:1; display:flex; gap:12px; margin-bottom:16px; align-items:center; }
   .ctrl-btn {
     font-family:'Jua',sans-serif; font-size:1.1rem;
@@ -53,7 +50,6 @@
     grid-template-rows:repeat(2,1fr);
     gap:20px; flex:1;
   }
-
   .name-card {
     background:rgba(255,255,255,0.88);
     border-radius:28px; padding:28px 32px;
@@ -61,28 +57,19 @@
     box-shadow:0 8px 30px rgba(255,150,180,0.15);
     animation:popIn 0.6s cubic-bezier(0.68,-0.55,0.27,1.55);
     display:flex; flex-direction:column; justify-content:center; gap:10px;
-    position: relative;
+    position:relative;
   }
   @keyframes popIn { 0%{transform:scale(0) rotate(-5deg);opacity:0;} 100%{transform:scale(1) rotate(0deg);opacity:1;} }
 
-  /* 개별 삭제 버튼 */
   .delete-btn {
-    position: absolute;
-    top: 14px; right: 14px;
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    background: rgba(255,80,80,0.12);
-    border: 2px solid rgba(255,80,80,0.3);
-    color: #ff4444;
-    font-size: 1.1rem;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    opacity: 0;
-    transition: opacity 0.2s;
-    font-family: sans-serif;
-    line-height: 1;
+    position:absolute; top:14px; right:14px;
+    width:38px; height:38px; border-radius:50%;
+    background:rgba(255,80,80,0.1); border:2px solid rgba(255,80,80,0.25);
+    color:#ff4444; font-size:1.1rem; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; transition:opacity 0.2s; font-family:sans-serif;
   }
-  .name-card:hover .delete-btn { opacity: 1; }
+  .name-card:hover .delete-btn { opacity:1; }
 
   .name-card:nth-child(6n+1) { border-color:#ff6b9d; background:rgba(255,240,245,0.92); }
   .name-card:nth-child(6n+2) { border-color:#ffc107; background:rgba(255,253,230,0.92); }
@@ -95,10 +82,7 @@
   .card-grade { font-size:1.3rem; color:#bbb; }
   .card-mood { font-size:3rem; }
   .card-name { font-size:4rem; color:#333; line-height:1.2; }
-  .card-memo {
-    font-size:1.3rem; color:#777; line-height:1.6; word-break:break-all;
-    background:rgba(0,0,0,0.05); border-radius:12px; padding:10px 14px;
-  }
+  .card-memo { font-size:1.3rem; color:#777; line-height:1.6; word-break:break-all; background:rgba(0,0,0,0.05); border-radius:12px; padding:10px 14px; }
 
   .empty-state {
     text-align:center; grid-column:1/-1;
@@ -141,8 +125,12 @@
 
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdGODDgP2tjewoo1Hfr0qv64Z09xNBD71q2s1gO8LiezcOB4E32Zmd95bJH_fvgQJ-/exec';
-let allNames = []; // 전체 데이터 보관
-let shownCount = 0;
+
+// 숨긴 인덱스 목록 (새로고침해도 기억)
+let hiddenIndexes = new Set(
+  JSON.parse(sessionStorage.getItem('hiddenIndexes') || '[]')
+);
+let totalLoaded = 0;
 
 // 배경 별
 const starEmojis = ['⭐','🌟','✨','💫','🎀','🌸','🍀','🌈','🎉','💕'];
@@ -164,17 +152,22 @@ async function loadNames() {
     const res = await fetch(SCRIPT_URL + '?t=' + Date.now());
     const data = await res.json();
     const names = data.names || [];
-    if (names.length > shownCount) {
+
+    if (names.length > totalLoaded) {
       const grid = document.getElementById('namesGrid');
       const empty = grid.querySelector('.empty-state');
-      if (empty) empty.remove();
-      for (let i = shownCount; i < names.length; i++) {
-        allNames.push(names[i]);
-        addCard(names[i], i);
+
+      for (let i = totalLoaded; i < names.length; i++) {
+        // 숨긴 항목은 건너뜀
+        if (!hiddenIndexes.has(i)) {
+          if (empty) empty.remove();
+          addCard(names[i], i);
+        }
       }
-      shownCount = names.length;
-      updateCount();
+      totalLoaded = names.length;
     }
+
+    updateCount();
     document.getElementById('statusText').textContent =
       '마지막 갱신: ' + new Date().toLocaleTimeString('ko-KR');
   } catch(e) {
@@ -188,7 +181,7 @@ function addCard(d, idx) {
   card.className = 'name-card';
   card.dataset.idx = idx;
   card.innerHTML =
-    '<button class="delete-btn" onclick="deleteCard(this)" title="이 카드 지우기">✕</button>' +
+    '<button class="delete-btn" onclick="deleteCard(this)" title="이 카드 숨기기">✕</button>' +
     '<div class="card-top">' +
       '<span class="card-grade">' + esc(d.grade||'') + ' ' + esc(d.num||'') + '번</span>' +
       '<span class="card-mood">' + esc(d.mood||'') + '</span>' +
@@ -200,17 +193,23 @@ function addCard(d, idx) {
 
 function deleteCard(btn) {
   const card = btn.closest('.name-card');
-  if (!confirm(card.querySelector('.card-name').textContent + ' 카드를 지울까요?')) return;
+  const name = card.querySelector('.card-name').textContent;
+  if (!confirm(name + ' 카드를 지울까요?')) return;
+
+  const idx = parseInt(card.dataset.idx);
+  hiddenIndexes.add(idx);
+  // 세션에 저장 → 새로고침해도 안 나타남
+  sessionStorage.setItem('hiddenIndexes', JSON.stringify([...hiddenIndexes]));
+
   card.style.transition = 'all 0.3s';
   card.style.transform = 'scale(0)';
   card.style.opacity = '0';
   setTimeout(() => {
     card.remove();
-    shownCount--;
     updateCount();
-    const grid = document.getElementById('namesGrid');
-    if (grid.querySelectorAll('.name-card').length === 0) {
-      grid.innerHTML = '<div class="empty-state"><span class="emoji">⏳</span><p>아직 제출한 학생이 없어요</p></div>';
+    if (document.querySelectorAll('.name-card').length === 0) {
+      document.getElementById('namesGrid').innerHTML =
+        '<div class="empty-state"><span class="emoji">⏳</span><p>아직 제출한 학생이 없어요</p></div>';
     }
   }, 300);
 }
@@ -224,7 +223,9 @@ async function clearAll() {
   if (!confirm('모든 데이터를 지울까요?')) return;
   try {
     await fetch(SCRIPT_URL + '?action=clear');
-    shownCount = 0; allNames = [];
+    hiddenIndexes.clear();
+    sessionStorage.removeItem('hiddenIndexes');
+    totalLoaded = 0;
     document.getElementById('namesGrid').innerHTML =
       '<div class="empty-state"><span class="emoji">⏳</span><p>아직 제출한 학생이 없어요</p></div>';
     document.getElementById('countBadge').textContent = '0명 제출';
