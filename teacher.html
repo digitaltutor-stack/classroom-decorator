@@ -7,99 +7,125 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
   * { margin: 0; padding: 0; box-sizing: border-box; }
+
   body {
     min-height: 100vh;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    background: linear-gradient(135deg, #fff9c4 0%, #ffe0f0 50%, #c8f0ff 100%);
     font-family: 'Jua', sans-serif;
-    color: white;
     padding: 28px 36px;
     display: flex;
     flex-direction: column;
   }
 
-  header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 24px; flex-wrap: wrap; gap: 16px;
+  /* 배경 별 */
+  .bg-stars {
+    position: fixed; top:0; left:0;
+    width:100%; height:100%;
+    pointer-events: none; z-index: 0;
+    overflow: hidden;
   }
-  .header-left h1 { font-size: 2.4rem; color: #ffd700; }
-  .header-left p { font-size: 1.1rem; color: #aaa; margin-top: 4px; }
+  .bg-star {
+    position: absolute;
+    font-size: 1.8rem;
+    animation: floatStar 4s ease-in-out infinite;
+    opacity: 0.4;
+  }
+  @keyframes floatStar {
+    0%,100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-18px) rotate(12deg); }
+  }
+
+  header {
+    position: relative; z-index: 1;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px; flex-wrap: wrap; gap: 16px;
+  }
+  .header-left h1 { font-size: 2.4rem; color: #ff6b9d; }
+  .header-left p { font-size: 1.1rem; color: #bbb; margin-top: 4px; }
 
   .count-badge {
     background: linear-gradient(135deg, #ff6b9d, #ff9a3c);
     border-radius: 50px; padding: 12px 32px;
-    font-size: 1.8rem; font-weight: bold;
-    box-shadow: 0 4px 20px rgba(255,107,157,0.4);
+    font-size: 1.8rem; color: white;
+    box-shadow: 0 4px 20px rgba(255,107,157,0.35);
   }
 
-  .controls { display: flex; gap: 14px; margin-bottom: 16px; align-items: center; }
-  .ctrl-btn {
-    font-family: 'Jua', sans-serif; font-size: 1.2rem;
-    padding: 12px 24px; border: 2px solid rgba(255,255,255,0.2);
-    border-radius: 14px; background: rgba(255,255,255,0.08);
-    color: white; cursor: pointer;
+  .controls {
+    position: relative; z-index: 1;
+    display: flex; gap: 12px; margin-bottom: 16px; align-items: center;
   }
-  .ctrl-btn.danger { border-color: rgba(255,80,80,0.4); color: #ff8080; }
+  .ctrl-btn {
+    font-family: 'Jua', sans-serif; font-size: 1.1rem;
+    padding: 10px 22px;
+    border: 2.5px solid rgba(255,107,157,0.3);
+    border-radius: 50px;
+    background: rgba(255,255,255,0.7);
+    color: #ff6b9d; cursor: pointer;
+    backdrop-filter: blur(4px);
+  }
+  .ctrl-btn.danger { border-color: rgba(255,80,80,0.3); color: #ff4444; }
   .status {
-    display: flex; align-items: center; gap: 10px;
-    font-size: 1rem; color: #aaa; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 1rem; color: #bbb; margin-left: 8px;
   }
   .dot {
-    width: 12px; height: 12px; border-radius: 50%;
+    width: 10px; height: 10px; border-radius: 50%;
     background: #4caf50; animation: pulse 1.5s infinite;
   }
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
 
-  /* 6칸 고정 그리드 */
+  /* 6칸 그리드 */
   .names-grid {
+    position: relative; z-index: 1;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(2, 1fr);
     gap: 20px;
     flex: 1;
-    min-height: 0;
   }
 
   .name-card {
-    background: rgba(255,255,255,0.08);
-    border: 3px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.88);
     border-radius: 28px;
-    padding: 30px 36px;
-    animation: popIn 0.5s cubic-bezier(0.68,-0.55,0.27,1.55);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 12px;
+    padding: 28px 32px;
+    border: 3px solid transparent;
+    box-shadow: 0 8px 30px rgba(255,150,180,0.15);
+    animation: popIn 0.6s cubic-bezier(0.68,-0.55,0.27,1.55);
+    display: flex; flex-direction: column; justify-content: center; gap: 10px;
+    backdrop-filter: blur(6px);
   }
-  @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  @keyframes popIn {
+    0% { transform: scale(0) rotate(-5deg); opacity: 0; }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  .name-card:nth-child(6n+1) { border-color: #ff6b9d; background: rgba(255,240,245,0.92); }
+  .name-card:nth-child(6n+2) { border-color: #ffc107; background: rgba(255,253,230,0.92); }
+  .name-card:nth-child(6n+3) { border-color: #4fc3f7; background: rgba(230,248,255,0.92); }
+  .name-card:nth-child(6n+4) { border-color: #66bb6a; background: rgba(232,255,234,0.92); }
+  .name-card:nth-child(6n+5) { border-color: #ff9a3c; background: rgba(255,245,230,0.92); }
+  .name-card:nth-child(6n+6) { border-color: #ce93d8; background: rgba(245,235,255,0.92); }
 
   .card-top {
-    display: flex; align-items: center;
-    justify-content: space-between;
+    display: flex; align-items: center; justify-content: space-between;
   }
-  .card-grade { font-size: 1.4rem; color: #aaa; }
+  .card-grade { font-size: 1.3rem; color: #bbb; }
   .card-mood { font-size: 3rem; }
-  .card-name { font-size: 4rem; color: #fff; line-height: 1.2; }
+  .card-name { font-size: 4rem; color: #333; line-height: 1.2; }
   .card-memo {
-    font-size: 1.4rem; color: #ccc;
+    font-size: 1.3rem; color: #777;
     line-height: 1.6; word-break: break-all;
-    background: rgba(255,255,255,0.07);
-    border-radius: 12px; padding: 10px 16px;
+    background: rgba(0,0,0,0.05);
+    border-radius: 12px; padding: 10px 14px;
   }
-
-  .name-card:nth-child(6n+1) { border-color: #ff6b9d; background: rgba(255,107,157,0.14); }
-  .name-card:nth-child(6n+2) { border-color: #ffd700; background: rgba(255,215,0,0.1); }
-  .name-card:nth-child(6n+3) { border-color: #4fc3f7; background: rgba(79,195,247,0.1); }
-  .name-card:nth-child(6n+4) { border-color: #a5d6a7; background: rgba(165,214,167,0.1); }
-  .name-card:nth-child(6n+5) { border-color: #ffb74d; background: rgba(255,183,77,0.1); }
-  .name-card:nth-child(6n+6) { border-color: #ce93d8; background: rgba(206,147,216,0.1); }
 
   .empty-state {
     text-align: center;
     grid-column: 1 / -1;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    color: #444; gap: 20px;
-    padding: 60px 0;
+    gap: 20px; padding: 60px 0;
+    color: #ccc;
   }
   .empty-state .emoji { font-size: 7rem; }
   .empty-state p { font-size: 2rem; }
@@ -107,9 +133,12 @@
 </head>
 <body>
 
+<!-- 배경 별 -->
+<div class="bg-stars" id="bgStars"></div>
+
 <header>
   <div class="header-left">
-    <h1>👩‍🏫 선생님 화면</h1>
+    <h1>🌟 선생님 화면</h1>
     <p>학생들이 제출하면 여기에 나타나요 (5초마다 자동 갱신)</p>
   </div>
   <div class="count-badge" id="countBadge">0명 제출</div>
@@ -118,7 +147,7 @@
 <div class="controls">
   <button class="ctrl-btn" onclick="loadNames()">🔄 지금 새로고침</button>
   <button class="ctrl-btn danger" onclick="clearAll()">🗑️ 전체 지우기</button>
-  <div class="status" style="margin:0; margin-left:8px;">
+  <div class="status">
     <div class="dot"></div>
     <span id="statusText">자동 새로고침 중...</span>
   </div>
@@ -128,13 +157,28 @@
   <div class="empty-state">
     <span class="emoji">⏳</span>
     <p>아직 제출한 학생이 없어요</p>
-    <p style="font-size:1.4rem; color:#333;">학생들이 QR을 찍고 이름을 쓰면 여기에 나타납니다!</p>
+    <p style="font-size:1.4rem;">학생들이 QR을 찍고 이름을 쓰면 여기에 나타납니다!</p>
   </div>
 </div>
 
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdGODDgP2tjewoo1Hfr0qv64Z09xNBD71q2s1gO8LiezcOB4E32Zmd95bJH_fvgQJ-/exec';
 let shownCount = 0;
+
+// 배경 별 생성
+const starEmojis = ['⭐','🌟','✨','💫','🎀','🌸','🍀','🌈','🎉','💕'];
+const bgStars = document.getElementById('bgStars');
+for (let i = 0; i < 16; i++) {
+  const s = document.createElement('div');
+  s.className = 'bg-star';
+  s.textContent = starEmojis[i % starEmojis.length];
+  s.style.left = Math.random() * 100 + '%';
+  s.style.top = Math.random() * 100 + '%';
+  s.style.fontSize = (1.2 + Math.random() * 1.5) + 'rem';
+  s.style.animationDelay = (Math.random() * 4) + 's';
+  s.style.animationDuration = (3 + Math.random() * 3) + 's';
+  bgStars.appendChild(s);
+}
 
 async function loadNames() {
   try {
