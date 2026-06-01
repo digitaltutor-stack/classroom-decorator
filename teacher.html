@@ -14,7 +14,7 @@
   }
   header {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+    margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
   }
   .header-left h1 { font-size: 1.8rem; color: #ffd700; }
   .header-left p { font-size: 1rem; color: #aaa; margin-top: 2px; }
@@ -22,7 +22,7 @@
     background: linear-gradient(135deg, #ff6b9d, #ff9a3c);
     border-radius: 50px; padding: 10px 24px; font-size: 1.3rem; font-weight: bold;
   }
-  .controls { display: flex; gap: 10px; margin-bottom: 24px; }
+  .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
   .ctrl-btn {
     font-family: 'Jua', sans-serif; font-size: 1rem;
     padding: 10px 20px; border: 2px solid rgba(255,255,255,0.2);
@@ -35,12 +35,16 @@
   @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
   .names-grid { display: flex; flex-wrap: wrap; gap: 16px; }
   .name-card {
-    background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.15);
-    border-radius: 20px; padding: 24px 32px; text-align: center;
-    animation: popIn 0.5s cubic-bezier(0.68,-0.55,0.27,1.55); min-width: 120px;
+    background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 20px; padding: 16px 20px; min-width: 160px;
+    animation: popIn 0.5s cubic-bezier(0.68,-0.55,0.27,1.55);
   }
   @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-  .name-text { font-size: 2rem; color: #fff; display: block; }
+  .card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .card-grade { font-size: 0.8rem; color: #aaa; }
+  .card-mood { font-size: 1.6rem; }
+  .card-name { font-size: 1.8rem; color: #fff; margin-bottom: 6px; }
+  .card-memo { font-size: 0.85rem; color: #ccc; line-height: 1.4; word-break: break-all; }
   .name-card:nth-child(6n+1) { border-color: #ff6b9d; background: rgba(255,107,157,0.12); }
   .name-card:nth-child(6n+2) { border-color: #ffd700; background: rgba(255,215,0,0.1); }
   .name-card:nth-child(6n+3) { border-color: #4fc3f7; background: rgba(79,195,247,0.1); }
@@ -56,7 +60,7 @@
 <header>
   <div class="header-left">
     <h1>👩‍🏫 선생님 화면</h1>
-    <p>학생들이 이름을 쓰면 여기에 나타나요 (5초마다 자동 갱신)</p>
+    <p>학생들이 제출하면 여기에 나타나요 (5초마다 자동 갱신)</p>
   </div>
   <div class="count-badge" id="countBadge">0명 제출</div>
 </header>
@@ -72,7 +76,7 @@
   <div class="empty-state">
     <span class="emoji">⏳</span>
     <p>아직 제출한 학생이 없어요</p>
-    <p>학생들이 이름을 쓰면 여기에 나타납니다!</p>
+    <p>학생들이 제출하면 여기에 나타납니다!</p>
   </div>
 </div>
 <script>
@@ -89,9 +93,16 @@ async function loadNames() {
       const empty = grid.querySelector('.empty-state');
       if (empty) empty.remove();
       for (let i = shownCount; i < names.length; i++) {
+        const d = names[i];
         const card = document.createElement('div');
         card.className = 'name-card';
-        card.innerHTML = '<span class="name-text">' + escapeHtml(names[i].name) + '</span>';
+        card.innerHTML =
+          '<div class="card-top">' +
+            '<span class="card-grade">' + esc(d.grade||'') + ' ' + esc(d.num||'') + '번</span>' +
+            '<span class="card-mood">' + esc(d.mood||'') + '</span>' +
+          '</div>' +
+          '<div class="card-name">' + esc(d.name||'') + '</div>' +
+          (d.memo ? '<div class="card-memo">💬 ' + esc(d.memo) + '</div>' : '');
         grid.appendChild(card);
       }
       shownCount = names.length;
@@ -104,17 +115,18 @@ async function loadNames() {
 }
 
 async function clearAll() {
-  if (!confirm('모든 이름을 지울까요?')) return;
+  if (!confirm('모든 데이터를 지울까요?')) return;
   try {
     await fetch(SCRIPT_URL + '?action=clear');
     shownCount = 0;
-    document.getElementById('namesGrid').innerHTML = '<div class="empty-state"><span class="emoji">⏳</span><p>아직 제출한 학생이 없어요</p><p>학생들이 이름을 쓰면 여기에 나타납니다!</p></div>';
+    document.getElementById('namesGrid').innerHTML =
+      '<div class="empty-state"><span class="emoji">⏳</span><p>아직 제출한 학생이 없어요</p><p>학생들이 제출하면 여기에 나타납니다!</p></div>';
     document.getElementById('countBadge').textContent = '0명 제출';
   } catch(e) { alert('오류가 발생했어요'); }
 }
 
-function escapeHtml(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 loadNames();
