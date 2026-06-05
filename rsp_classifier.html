@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>우리가 만든 AI 인식기</title>
+<title>AI 도형 인식기</title>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 <style>
@@ -252,7 +252,7 @@
 </head>
 <body>
 
-<h1>🤖 AI <span>우리가 만든 AI </span> 인식기</h1>
+<h1>🤖 AI <span>도형</span> 인식기</h1>
 
 <!-- 설정 화면 -->
 <div id="setup">
@@ -264,9 +264,9 @@
     <span style="color:#666;">예: 가위, 바위, 보 — 비워두면 Class 1, 2, 3... 으로 표시</span>
   </p>
   <div id="classInputs" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
-    <input type="text" class="cls-name" placeholder="Class 1 이름 (예: 가위)" />
-    <input type="text" class="cls-name" placeholder="Class 2 이름 (예: 바위)" />
-    <input type="text" class="cls-name" placeholder="Class 3 이름 (예: 보)" />
+    <input type="text" class="cls-name" placeholder="Class 1 이름 (예: 동그라미)" />
+    <input type="text" class="cls-name" placeholder="Class 2 이름 (예: 세모)" />
+    <input type="text" class="cls-name" placeholder="Class 3 이름 (예: 네모)" />
   </div>
   <button id="addClassBtn" onclick="addClassInput()" style="background:transparent; border:1px solid #3a3a5c; color:#aaa; padding:8px 16px; border-radius:8px; cursor:pointer; margin-bottom:16px; font-size:0.85rem;">+ 클래스 추가</button>
   <br>
@@ -283,7 +283,7 @@
   <div id="camBox">
     <!-- canvas가 여기에 삽입됨 -->
     <div id="resultOverlay">
-      <span id="resultEmoji">✋</span>
+      <span id="resultEmoji">🔷</span>
       <span id="resultLabel">인식 중...</span>
       <span id="confBadge">0%</span>
     </div>
@@ -298,7 +298,7 @@
 
 <script>
 const COLORS = ['c1','c2','c3','c4','c5','c6'];
-const DEFAULT_EMOJIS = ['✂️','✊','✋','👆','🤙','🖐️'];
+const DEFAULT_EMOJIS = ['⭕','🔺','⬛','🔷','🔸','🔹'];
 
 let model, webcam, maxPredictions;
 let classNames = [];
