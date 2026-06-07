@@ -8,268 +8,91 @@
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
-  body {
-    font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
-    background: #0d0d1a;
-    color: #fff;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 24px 32px;
-  }
-
-  h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    letter-spacing: -0.5px;
-    margin-bottom: 24px;
-    color: #fff;
-  }
-
-  h1 span {
-    color: #7c6fff;
-  }
-
-  #setup {
-    background: #1a1a2e;
-    border: 1px solid #2e2e50;
-    border-radius: 16px;
-    padding: 32px 40px;
-    max-width: 560px;
-    width: 100%;
-    text-align: center;
-  }
-
-  #setup p {
-    color: #aaa;
-    font-size: 0.95rem;
-    margin-bottom: 20px;
-    line-height: 1.6;
-  }
-
-  #setup input {
-    width: 100%;
-    padding: 12px 16px;
-    border-radius: 10px;
-    border: 1px solid #3a3a5c;
-    background: #111128;
-    color: #fff;
-    font-size: 0.9rem;
-    margin-bottom: 12px;
-  }
-
+  body { font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif; background: #0d0d1a; color: #fff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 24px 32px; }
+  h1 { font-size: 2rem; font-weight: 700; margin-bottom: 24px; }
+  h1 span { color: #7c6fff; }
+  #setup { background: #1a1a2e; border: 1px solid #2e2e50; border-radius: 16px; padding: 32px 40px; max-width: 560px; width: 100%; text-align: center; }
+  #setup p { color: #aaa; font-size: 0.95rem; margin-bottom: 20px; line-height: 1.6; }
+  #setup input { width: 100%; padding: 12px 16px; border-radius: 10px; border: 1px solid #3a3a5c; background: #111128; color: #fff; font-size: 0.9rem; margin-bottom: 12px; }
   #setup input::placeholder { color: #555; }
-
-  #startBtn {
-    width: 100%;
-    padding: 14px;
-    background: #7c6fff;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-
-  #startBtn:hover { background: #6a5de8; }
+  #startBtn { width: 100%; padding: 14px; background: #7c6fff; color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; }
   #startBtn:disabled { background: #333; color: #666; cursor: not-allowed; }
+  #main { display: none; width: 100%; max-width: 1200px; gap: 32px; align-items: flex-start; justify-content: center; }
+  #main.show { display: flex; flex-wrap: wrap; }
 
-  #main {
-    display: none;
-    width: 100%;
-    max-width: 1100px;
-    gap: 28px;
-    align-items: flex-start;
-    justify-content: center;
-  }
+  /* 카메라 */
+  #camBox { flex: 1 1 520px; background: #1a1a2e; border: 1px solid #2e2e50; border-radius: 24px; overflow: hidden; position: relative; }
+  #camBox canvas { width: 100% !important; height: auto !important; display: block; }
+  #resultOverlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 24px 32px; background: linear-gradient(transparent, rgba(0,0,0,0.9)); display: flex; align-items: center; gap: 20px; }
+  #resultEmoji { font-size: 6rem; line-height: 1; }
+  #resultLabel { font-size: 2.6rem; font-weight: 700; color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,0.8); }
+  #confBadge { margin-left: auto; background: rgba(124,111,255,0.3); border: 2px solid #7c6fff; color: #c4bfff; font-size: 1.1rem; font-weight: 700; padding: 8px 20px; border-radius: 24px; }
 
-  #main.show {
-    display: flex;
-    flex-wrap: wrap;
-  }
+  /* 그래프 */
+  #graphBox { flex: 1 1 340px; display: flex; flex-direction: column; gap: 20px; }
+  .bar-row { border-radius: 20px; padding: 24px 28px; transition: all 0.2s; border: 2px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); }
+  .bar-row.active { transform: scale(1.04); box-shadow: 0 8px 32px rgba(0,0,0,0.4); border-color: currentColor; }
+  .bar-header { display: flex; align-items: center; gap: 18px; margin-bottom: 16px; }
+  .bar-emoji { font-size: 4rem; line-height: 1; }
+  .bar-name { font-size: 1.8rem; font-weight: 700; flex: 1; }
+  .bar-pct { font-size: 2rem; font-weight: 800; min-width: 70px; text-align: right; }
+  .bar-track { height: 20px; background: rgba(255,255,255,0.07); border-radius: 12px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 12px; transition: width 0.15s ease-out; width: 0%; }
 
-  /* 웹캠 영역 */
-  #camBox {
-    flex: 1 1 500px;
-    background: #1a1a2e;
-    border: 1px solid #2e2e50;
-    border-radius: 20px;
-    overflow: hidden;
-    position: relative;
-  }
+  /* 도형별 색상 */
+  .bar-row.color-0 { border-color: rgba(255,107,107,0.3); }
+  .bar-row.color-0.active { background: rgba(255,107,107,0.15); border-color: #ff6b6b; box-shadow: 0 8px 32px rgba(255,107,107,0.25); }
+  .bar-row.color-0 .bar-pct { color: #ff6b6b; }
+  .bar-row.color-0 .bar-fill { background: linear-gradient(90deg, #ff6b6b, #ffaaaa); }
 
-  #camBox canvas {
-    width: 100% !important;
-    height: auto !important;
-    display: block;
-  }
+  .bar-row.color-1 { border-color: rgba(72,199,142,0.3); }
+  .bar-row.color-1.active { background: rgba(72,199,142,0.15); border-color: #48c78e; box-shadow: 0 8px 32px rgba(72,199,142,0.25); }
+  .bar-row.color-1 .bar-pct { color: #48c78e; }
+  .bar-row.color-1 .bar-fill { background: linear-gradient(90deg, #48c78e, #96e6c2); }
 
-  #resultOverlay {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    padding: 16px 24px;
-    background: linear-gradient(transparent, rgba(0,0,0,0.85));
-    display: flex;
-    align-items: center;
-    gap: 16px;
-  }
+  .bar-row.color-2 { border-color: rgba(255,214,10,0.3); }
+  .bar-row.color-2.active { background: rgba(255,214,10,0.15); border-color: #ffd60a; box-shadow: 0 8px 32px rgba(255,214,10,0.25); }
+  .bar-row.color-2 .bar-pct { color: #ffd60a; }
+  .bar-row.color-2 .bar-fill { background: linear-gradient(90deg, #ffd60a, #ffe97a); }
 
-  #resultEmoji {
-    font-size: 3.5rem;
-    line-height: 1;
-    transition: transform 0.2s;
-  }
+  .bar-row.color-3 { border-color: rgba(162,155,254,0.3); }
+  .bar-row.color-3.active { background: rgba(162,155,254,0.15); border-color: #a29bfe; box-shadow: 0 8px 32px rgba(162,155,254,0.25); }
+  .bar-row.color-3 .bar-pct { color: #a29bfe; }
+  .bar-row.color-3 .bar-fill { background: linear-gradient(90deg, #a29bfe, #c4bfff); }
 
-  #resultLabel {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #fff;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.6);
-  }
+  .bar-row.color-4 { border-color: rgba(253,121,168,0.3); }
+  .bar-row.color-4.active { background: rgba(253,121,168,0.15); border-color: #fd79a8; box-shadow: 0 8px 32px rgba(253,121,168,0.25); }
+  .bar-row.color-4 .bar-pct { color: #fd79a8; }
+  .bar-row.color-4 .bar-fill { background: linear-gradient(90deg, #fd79a8, #ffaacb); }
 
-  #confBadge {
-    margin-left: auto;
-    background: rgba(124,111,255,0.25);
-    border: 1px solid #7c6fff;
-    color: #b8b0ff;
-    font-size: 0.85rem;
-    font-weight: 600;
-    padding: 4px 12px;
-    border-radius: 20px;
-  }
+  .bar-row.color-5 { border-color: rgba(85,239,196,0.3); }
+  .bar-row.color-5.active { background: rgba(85,239,196,0.15); border-color: #55efc4; box-shadow: 0 8px 32px rgba(85,239,196,0.25); }
+  .bar-row.color-5 .bar-pct { color: #55efc4; }
+  .bar-row.color-5 .bar-fill { background: linear-gradient(90deg, #55efc4, #9ffce0); }
 
-  /* 그래프 영역 */
-  #graphBox {
-    flex: 1 1 320px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .bar-row {
-    background: #1a1a2e;
-    border: 1px solid #2e2e50;
-    border-radius: 14px;
-    padding: 18px 22px;
-    transition: border-color 0.2s;
-  }
-
-  .bar-row.active {
-    border-color: #7c6fff;
-    background: #1e1b3a;
-  }
-
-  .bar-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-  }
-
-  .bar-emoji { font-size: 2rem; }
-
-  .bar-name {
-    font-size: 1.1rem;
-    font-weight: 600;
-    flex: 1;
-  }
-
-  .bar-pct {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: #7c6fff;
-    min-width: 52px;
-    text-align: right;
-  }
-
-  .bar-track {
-    height: 14px;
-    background: #111128;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-
-  .bar-fill {
-    height: 100%;
-    border-radius: 8px;
-    transition: width 0.15s ease-out;
-    width: 0%;
-  }
-
-  .bar-fill.c1 { background: #ff6b6b; }
-  .bar-fill.c2 { background: #4ecdc4; }
-  .bar-fill.c3 { background: #ffe66d; }
-  .bar-fill.c4 { background: #a29bfe; }
-  .bar-fill.c5 { background: #fd79a8; }
-  .bar-fill.c6 { background: #55efc4; }
-
-  #statusMsg {
-    text-align: center;
-    color: #666;
-    font-size: 0.9rem;
-    margin-top: 8px;
-  }
-
-  #loadingBar {
-    width: 100%;
-    max-width: 400px;
-    margin: 20px auto 0;
-  }
-
-  .progress-track {
-    height: 6px;
-    background: #2e2e50;
-    border-radius: 4px;
-    overflow: hidden;
-    margin-top: 10px;
-  }
-
-  .progress-fill {
-    height: 100%;
-    background: #7c6fff;
-    border-radius: 4px;
-    animation: loading 2s infinite;
-  }
-
-  @keyframes loading {
-    0% { width: 0%; }
-    50% { width: 70%; }
-    100% { width: 100%; }
-  }
-
-  .hint {
-    font-size: 0.8rem;
-    color: #555;
-    margin-top: 8px;
-    text-align: center;
-  }
+  #loadingBar { width: 100%; max-width: 400px; margin: 20px auto 0; }
+  .progress-track { height: 6px; background: #2e2e50; border-radius: 4px; overflow: hidden; margin-top: 10px; }
+  .progress-fill { height: 100%; background: #7c6fff; border-radius: 4px; animation: loading 2s infinite; }
+  @keyframes loading { 0%{width:0%} 50%{width:70%} 100%{width:100%} }
 </style>
 </head>
 <body>
 
 <h1>🤖 AI <span>도형</span> 인식기</h1>
 
-<!-- 설정 화면 -->
 <div id="setup">
   <p>티처블 머신에서 <strong>모델 내보내기 → 모델 업로드</strong> 후 생성된 URL을 아래에 붙여넣으세요.</p>
   <input type="text" id="urlInput" placeholder="https://teachablemachine.withgoogle.com/models/XXXXX/" />
-
   <p style="margin-top:0; margin-bottom:16px; font-size:0.82rem;">
     클래스 이름을 입력하세요 (학습 순서대로, 최대 6개)<br>
-    <span style="color:#666;">예: 가위, 바위, 보 — 비워두면 Class 1, 2, 3... 으로 표시</span>
+    <span style="color:#666;">예: 가위, 바위, 보</span>
   </p>
   <div id="classInputs" style="display:flex; flex-direction:column; gap:8px; margin-bottom:16px;">
-    <input type="text" class="cls-name" placeholder="Class 1 이름 (예: 동그라미)" />
-    <input type="text" class="cls-name" placeholder="Class 2 이름 (예: 세모)" />
-    <input type="text" class="cls-name" placeholder="Class 3 이름 (예: 네모)" />
+    <input type="text" class="cls-name" placeholder="Class 1 이름 (예: 세모)" />
+    <input type="text" class="cls-name" placeholder="Class 2 이름 (예: 네모)" />
+    <input type="text" class="cls-name" placeholder="Class 3 이름 (예: 동그라미)" />
   </div>
-  <button id="addClassBtn" onclick="addClassInput()" style="background:transparent; border:1px solid #3a3a5c; color:#aaa; padding:8px 16px; border-radius:8px; cursor:pointer; margin-bottom:16px; font-size:0.85rem;">+ 클래스 추가</button>
-  <br>
+  <button onclick="addClassInput()" style="background:transparent; border:1px solid #3a3a5c; color:#aaa; padding:8px 16px; border-radius:8px; cursor:pointer; margin-bottom:16px; font-size:0.85rem;">+ 클래스 추가</button><br>
   <button id="startBtn" onclick="init()">▶ 시작하기</button>
   <div id="loadingBar" style="display:none;">
     <p style="color:#aaa; font-size:0.9rem;">모델 불러오는 중...</p>
@@ -278,48 +101,62 @@
   <p id="errMsg" style="color:#ff6b6b; font-size:0.85rem; margin-top:12px; display:none;"></p>
 </div>
 
-<!-- 메인 화면 -->
 <div id="main">
   <div id="camBox">
-    <!-- canvas가 여기에 삽입됨 -->
     <div id="resultOverlay">
       <span id="resultEmoji">🔷</span>
       <span id="resultLabel">인식 중...</span>
       <span id="confBadge">0%</span>
     </div>
   </div>
-
-  <div id="graphBox">
-    <!-- 막대 그래프가 여기에 동적 생성됨 -->
-  </div>
+  <div id="graphBox"></div>
 </div>
 
-<p id="statusMsg"></p>
-
 <script>
-const COLORS = ['c1','c2','c3','c4','c5','c6'];
-const DEFAULT_EMOJIS = ['⭕','🔺','⬛','🔷','🔸','🔹'];
-
+const FALLBACK_EMOJIS = ['🔴','🟡','🔵','🟢','🟣','🟠'];
 let model, webcam, maxPredictions;
-let classNames = [];
-let classEmojis = [];
+let classNames = [], classEmojis = [];
 
 function addClassInput() {
   const inputs = document.querySelectorAll('.cls-name');
   if (inputs.length >= 6) return;
-  const div = document.createElement('input');
-  div.type = 'text';
-  div.className = 'cls-name';
-  div.placeholder = `Class ${inputs.length + 1} 이름`;
-  document.getElementById('classInputs').appendChild(div);
+  const el = document.createElement('input');
+  el.type = 'text'; el.className = 'cls-name';
+  el.placeholder = `Class ${inputs.length + 1} 이름`;
+  document.getElementById('classInputs').appendChild(el);
 }
+
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const modelParam  = params.get('model');
+  const classesParam = params.get('classes');
+  const emojisParam  = params.get('emojis');  // ✅ 이모지 직접 지정
+
+  if (modelParam) {
+    document.getElementById('urlInput').value = modelParam;
+
+    if (classesParam) {
+      const cls = classesParam.split(',');
+      const inputs = document.querySelectorAll('.cls-name');
+      inputs.forEach((el, i) => { if (cls[i]) el.value = cls[i].trim(); });
+      for (let i = inputs.length; i < cls.length && i < 6; i++) {
+        addClassInput();
+        document.querySelectorAll('.cls-name')[i].value = cls[i].trim();
+      }
+    }
+
+    // 이모지 파라미터 미리 저장
+    if (emojisParam) {
+      window._presetEmojis = emojisParam.split(',').map(e => e.trim());
+    }
+
+    init();
+  }
+});
 
 async function init() {
   const urlVal = document.getElementById('urlInput').value.trim();
-  if (!urlVal) {
-    showErr('모델 URL을 입력해주세요.');
-    return;
-  }
+  if (!urlVal) { showErr('모델 URL을 입력해주세요.'); return; }
   let modelURL = urlVal.endsWith('/') ? urlVal : urlVal + '/';
 
   const inputs = document.querySelectorAll('.cls-name');
@@ -333,34 +170,25 @@ async function init() {
     model = await tmImage.load(modelURL + 'model.json', modelURL + 'metadata.json');
     maxPredictions = model.getTotalClasses();
 
-    // 클래스 이름을 모델에서 가져와 보완
     const labels = model.getClassLabels ? model.getClassLabels() : [];
     for (let i = 0; i < maxPredictions; i++) {
-      if (!classNames[i] || classNames[i] === `Class ${i+1}`) {
-        classNames[i] = labels[i] || `Class ${i+1}`;
-      }
-      classEmojis[i] = DEFAULT_EMOJIS[i] || '🖐️';
+      if (!classNames[i] || classNames[i] === `Class ${i+1}`) classNames[i] = labels[i] || `Class ${i+1}`;
+      // ✅ URL 파라미터 이모지 우선, 없으면 폴백
+      classEmojis[i] = (window._presetEmojis && window._presetEmojis[i]) || FALLBACK_EMOJIS[i] || '🔷';
     }
 
     webcam = new tmImage.Webcam(640, 480, true);
     await webcam.setup();
     await webcam.play();
 
-    // UI 전환
     document.getElementById('setup').style.display = 'none';
-    const main = document.getElementById('main');
-    main.classList.add('show');
-
-    // 캔버스 삽입
+    document.getElementById('main').classList.add('show');
     const camBox = document.getElementById('camBox');
     camBox.insertBefore(webcam.canvas, camBox.firstChild);
-
-    // 그래프 생성
     buildGraph();
-
     window.requestAnimationFrame(loop);
   } catch(e) {
-    showErr('모델을 불러오지 못했습니다. URL을 확인해주세요.\n' + e.message);
+    showErr('모델을 불러오지 못했습니다.\n' + e.message);
     document.getElementById('startBtn').disabled = false;
     document.getElementById('loadingBar').style.display = 'none';
   }
@@ -371,33 +199,23 @@ function buildGraph() {
   box.innerHTML = '';
   for (let i = 0; i < maxPredictions; i++) {
     const row = document.createElement('div');
-    row.className = 'bar-row';
-    row.id = `row-${i}`;
+    row.className = `bar-row color-${i}`; row.id = `row-${i}`;
     row.innerHTML = `
       <div class="bar-header">
         <span class="bar-emoji">${classEmojis[i]}</span>
         <span class="bar-name">${classNames[i]}</span>
         <span class="bar-pct" id="pct-${i}">0%</span>
       </div>
-      <div class="bar-track">
-        <div class="bar-fill ${COLORS[i % COLORS.length]}" id="fill-${i}"></div>
-      </div>
-    `;
+      <div class="bar-track"><div class="bar-fill" id="fill-${i}"></div></div>`;
     box.appendChild(row);
   }
 }
 
-async function loop() {
-  webcam.update();
-  await predict();
-  window.requestAnimationFrame(loop);
-}
+async function loop() { webcam.update(); await predict(); window.requestAnimationFrame(loop); }
 
 async function predict() {
   const prediction = await model.predict(webcam.canvas);
-
-  let topIdx = 0;
-  let topProb = 0;
+  let topIdx = 0, topProb = 0;
   for (let i = 0; i < maxPredictions; i++) {
     const prob = prediction[i].probability;
     const pct = Math.round(prob * 100);
@@ -406,18 +224,13 @@ async function predict() {
     document.getElementById(`row-${i}`).classList.remove('active');
     if (prob > topProb) { topProb = prob; topIdx = i; }
   }
-
   document.getElementById(`row-${topIdx}`).classList.add('active');
   document.getElementById('resultEmoji').textContent = classEmojis[topIdx];
   document.getElementById('resultLabel').textContent = classNames[topIdx];
   document.getElementById('confBadge').textContent = Math.round(topProb * 100) + '%';
 }
 
-function showErr(msg) {
-  const el = document.getElementById('errMsg');
-  el.textContent = msg;
-  el.style.display = 'block';
-}
+function showErr(msg) { const el = document.getElementById('errMsg'); el.textContent = msg; el.style.display = 'block'; }
 </script>
 </body>
 </html>
