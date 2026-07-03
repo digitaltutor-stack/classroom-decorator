@@ -162,7 +162,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { initializeFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   // ── Firebase 연결 정보 (class-link 프로젝트) ──
   const firebaseConfig = {
@@ -175,7 +175,8 @@
   };
 
   const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+  // 학교망(필터링 장비) 환경에서 실시간 연결이 막힐 때 자동으로 우회 방식 사용
+  const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
 
   const $ = (id) => document.getElementById(id);
 
@@ -194,10 +195,9 @@
     $("waiting").style.display = "block";
 
     let firstLoad = true;
+    const linkRef = doc(db, "links", classId);
 
-    onSnapshot(doc(db, "links", classId), (snap) => {
-      $("status").textContent = "🟢 연결됨";
-
+    function render(snap) {
       if (!snap.exists() || !snap.data().url) {
         $("waiting").style.display = "block";
         $("arrived").style.display = "none";
@@ -227,9 +227,25 @@
         tag.style.animation = "pop 0.5s ease";
       }
       firstLoad = false;
+    }
+
+    onSnapshot(linkRef, (snap) => {
+      $("status").textContent = "🟢 연결됨";
+      render(snap);
     }, (err) => {
       $("status").textContent = "🔴 연결 오류 - 새로고침 해보세요";
       console.error(err);
+    });
+
+    // iPad가 잠자기/앱 전환 후 화면에 돌아온 순간, 재연결을 기다리지 않고 즉시 최신 링크 1회 확인
+    document.addEventListener("visibilitychange", async () => {
+      if (document.visibilityState === "visible") {
+        try {
+          render(await getDoc(linkRef));
+        } catch (e) {
+          console.error(e);
+        }
+      }
     });
   }
 </script>
