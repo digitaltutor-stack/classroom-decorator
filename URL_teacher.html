@@ -187,14 +187,35 @@
   let grade = null;
   let unsub = null;
 
-  $("grades").addEventListener("click", (e) => {
-    const btn = e.target.closest(".grade");
+  function selectGrade(g) {
+    const btn = document.querySelector(`.grade[data-g="${g}"]`);
     if (!btn) return;
     document.querySelectorAll(".grade").forEach(b => b.classList.remove("on"));
     btn.classList.add("on");
-    grade = btn.dataset.g;
-    watchCurrent(grade);
+    grade = g;
+    try { localStorage.setItem("cl-grade", g); } catch (e) {}  // 마지막 학년 기억
+    watchCurrent(g);
+  }
+
+  $("grades").addEventListener("click", (e) => {
+    const btn = e.target.closest(".grade");
+    if (!btn) return;
+    selectGrade(btn.dataset.g);
   });
+
+  // 페이지를 열 때: 지난번 선택했던 학년을 자동 선택
+  try {
+    const saved = localStorage.getItem("cl-grade");
+    if (saved && ["1","2","3","4","5","6"].includes(saved)) selectGrade(saved);
+  } catch (e) {}
+
+  // 페이지를 열 때: 주소의 ?url= 값으로 입력칸 자동 채우기 (단축어 연동용)
+  const pageParams = new URLSearchParams(location.search);
+  const prefillUrl = pageParams.get("url");
+  if (prefillUrl && /^https?:\/\/.+/.test(prefillUrl)) {
+    $("url").value = prefillUrl;
+    showMsg("링크가 자동으로 입력됐어요. 학년 확인 후 전송을 누르세요!", "ok");
+  }
 
   // 선택한 학년의 현재 링크를 실시간 표시
   function watchCurrent(g) {
@@ -220,7 +241,7 @@
     });
   }
 
-  // ── 붙여넣기 버튼 ──//
+  // ── 붙여넣기 버튼 ──
   $("pasteBtn").onclick = async () => {
     try {
       const t = await navigator.clipboard.readText();
