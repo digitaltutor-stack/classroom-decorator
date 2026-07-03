@@ -96,6 +96,20 @@
   }
   .send-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--accent-dark); }
   .send-btn:disabled { background: var(--muted); box-shadow: none; cursor: not-allowed; }
+  .clear-btn {
+    width: 100%;
+    font-family: 'Jua', sans-serif;
+    font-size: 16px;
+    padding: 13px;
+    margin-top: 10px;
+    border: 2px solid var(--danger);
+    border-radius: 14px;
+    background: #FFF3F3;
+    color: var(--danger);
+    cursor: pointer;
+  }
+  .clear-btn:active { background: #FFE2E2; }
+  .clear-btn:disabled { border-color: var(--muted); color: var(--muted); background: #F5F5F5; cursor: not-allowed; }
 
   /* ── 상태/현재 링크 ── */
   #msg { min-height: 24px; margin-top: 14px; font-size: 15px; text-align: center; }
@@ -142,6 +156,7 @@
   </div>
 
   <button class="send-btn" id="sendBtn">🚀 전송하기</button>
+  <button class="clear-btn" id="clearBtn">🧹 링크 지우기 (대기 화면으로)</button>
   <div id="msg"></div>
 
   <div class="now" id="now" style="display:none;">
@@ -153,7 +168,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, doc, setDoc, onSnapshot, serverTimestamp }
+  import { getFirestore, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -239,6 +254,22 @@
       showMsg("전송 실패: " + err.message, "err");
     }
     $("sendBtn").disabled = false;
+  };
+
+  // ── 링크 지우기 (학생 화면을 대기 상태로) ──
+  $("clearBtn").onclick = async () => {
+    if (!grade) return showMsg("지울 학년을 먼저 선택해주세요", "err");
+
+    $("clearBtn").disabled = true;
+    showMsg("지우는 중...", "");
+    try {
+      await deleteDoc(doc(db, "links", grade));
+      showMsg(`🧹 ${grade}학년 링크를 지웠어요. 학생 화면은 대기 상태가 됩니다.`, "ok");
+    } catch (err) {
+      console.error(err);
+      showMsg("지우기 실패: " + err.message, "err");
+    }
+    $("clearBtn").disabled = false;
   };
 
   function showMsg(text, cls) {
