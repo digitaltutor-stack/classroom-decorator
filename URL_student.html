@@ -175,8 +175,8 @@
   };
 
   const app = initializeApp(firebaseConfig);
-  // 학교망(필터링 장비) 환경에서 실시간 연결이 막힐 때 자동으로 우회 방식 사용
-  const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+  // 학교망(필터링 장비)에서 실시간 연결이 지연·차단될 때를 대비해, 처음부터 우회 방식(롱폴링)을 강제
+  const db = initializeFirestore(app, { experimentalForceLongPolling: true });
 
   const $ = (id) => document.getElementById(id);
 
