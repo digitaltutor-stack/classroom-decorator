@@ -168,7 +168,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { initializeFirestore, doc, setDoc, deleteDoc, onSnapshot, serverTimestamp }
+  import { initializeFirestore, doc, getDocFromServer, setDoc, deleteDoc, onSnapshot, serverTimestamp }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -183,6 +183,9 @@
   // 학교망(필터링 장비)에서 연결이 지연될 때를 대비해 우회 방식(롱폴링) 강제 — 학생 페이지와 동일
   const db = initializeFirestore(app, { experimentalForceLongPolling: true });
   const $ = (id) => document.getElementById(id);
+
+  // 페이지를 열자마자 백그라운드에서 서버 연결을 미리 맺어둠 (전송을 누를 때 이미 연결돼 있게 하여 첫 전송 지연 완화)
+  getDocFromServer(doc(db, "links", "1")).catch(() => {});
 
   // ── 학년 선택 ──
   let grade = null;
@@ -253,45 +256,38 @@
   };
 
   // ── 전송 ──
-  $("sendBtn").onclick = async () => {
+  $("sendBtn").onclick = () => {
     const url = $("url").value.trim();
     const title = $("title").value.trim();
 
     if (!grade) return showMsg("받을 학년을 먼저 선택해주세요", "err");
     if (!/^https?:\/\/.+/.test(url)) return showMsg("http:// 또는 https:// 로 시작하는 주소를 입력해주세요", "err");
 
-    $("sendBtn").disabled = true;
-    showMsg("전송 중...", "");
-    try {
-      await setDoc(doc(db, "links", grade), {
-        url: url,
-        title: title || "선생님이 보낸 링크",
-        updatedAt: serverTimestamp()
-      });
-      showMsg(`✅ ${grade}학년으로 전송 완료!`, "ok");
-      $("url").value = "";
-      $("title").value = "";
-    } catch (err) {
+    // 서버 확인을 기다리지 않고 즉시 화면 처리 (Firestore가 로컬에 먼저 기록 후 백그라운드로 서버 동기화)
+    setDoc(doc(db, "links", grade), {
+      url: url,
+      title: title || "선생님이 보낸 링크",
+      updatedAt: serverTimestamp()
+    }).catch((err) => {
       console.error(err);
-      showMsg("전송 실패: " + err.message, "err");
-    }
-    $("sendBtn").disabled = false;
+      showMsg("전송 실패: " + err.message + " (다시 눌러주세요)", "err");
+    });
+
+    showMsg(`✅ ${grade}학년으로 전송 완료!`, "ok");
+    $("url").value = "";
+    $("title").value = "";
   };
 
   // ── 링크 지우기 (학생 화면을 대기 상태로) ──
-  $("clearBtn").onclick = async () => {
+  $("clearBtn").onclick = () => {
     if (!grade) return showMsg("지울 학년을 먼저 선택해주세요", "err");
 
-    $("clearBtn").disabled = true;
-    showMsg("지우는 중...", "");
-    try {
-      await deleteDoc(doc(db, "links", grade));
-      showMsg(`🧹 ${grade}학년 링크를 지웠어요. 학생 화면은 대기 상태가 됩니다.`, "ok");
-    } catch (err) {
+    deleteDoc(doc(db, "links", grade)).catch((err) => {
       console.error(err);
-      showMsg("지우기 실패: " + err.message, "err");
-    }
-    $("clearBtn").disabled = false;
+      showMsg("지우기 실패: " + err.message + " (다시 눌러주세요)", "err");
+    });
+
+    showMsg(`🧹 ${grade}학년 링크를 지웠어요. 학생 화면은 대기 상태가 됩니다.`, "ok");
   };
 
   function showMsg(text, cls) {
