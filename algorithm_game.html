@@ -32,10 +32,13 @@
     /* 정답 칸에 들어간 카드는 반듯하게 */
     .drop-slot .block-card { transform: rotate(0deg); }
     .block-card {
-      touch-action: none;
+      touch-action: manipulation;
       user-select: none;
       -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
     }
+    .drop-slot { touch-action: manipulation; }
     .block-card.dragging { opacity: 0.4; }
     .block-card.selected {
       outline: 5px dashed #fb7185;
@@ -369,8 +372,9 @@ document.addEventListener("dblclick", (e) => {
   }
 });
 
-/* ---------- 터치(탭) 방식 (이벤트 위임) ---------- */
-document.addEventListener("click", (e) => {
+/* ---------- 터치(탭) 방식 ---------- */
+// 카드 선택/이동 로직 (클릭과 터치 양쪽에서 사용)
+function handleTap(e) {
   const card = e.target.closest(".block-card");
   const zone = e.target.closest(".drop-slot, #tray");
 
@@ -390,7 +394,24 @@ document.addEventListener("click", (e) => {
     selectedCard.classList.remove("selected");
     selectedCard = null;
   }
-});
+}
+
+// PC 클릭
+document.addEventListener("click", handleTap);
+
+// iPad/휴대폰 터치: touchend로 확실히 반응 (스크롤과 구분)
+let touchMoved = false;
+document.addEventListener("touchstart", () => { touchMoved = false; }, { passive: true });
+document.addEventListener("touchmove", () => { touchMoved = true; }, { passive: true });
+document.addEventListener("touchend", (e) => {
+  if (touchMoved) return; // 스크롤한 경우는 무시
+  // 카드나 칸을 탭한 경우에만 처리하고, 뒤따르는 click 중복 방지
+  const hit = e.target.closest(".block-card, .drop-slot, #tray");
+  if (hit) {
+    e.preventDefault();
+    handleTap(e);
+  }
+}, { passive: false });
 
 function placeCard(card, zone) {
   if (zone.classList.contains("drop-slot")) {
