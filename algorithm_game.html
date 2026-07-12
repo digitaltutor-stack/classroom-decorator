@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>순서 맞추기 게임</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Jua&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Gaegu', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      background-image: url('algorithm_bg.png');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      background-color: #FFF6EA;
+    }
+    h1, h2, .title-font { font-family: 'Jua', 'Gaegu', sans-serif; }
+
+    /* 손으로 붙인 스티커처럼 카드마다 살짝 다른 각도 */
+    #tray .block-card:nth-child(3n+1)   { transform: rotate(-2deg); }
+    #tray .block-card:nth-child(3n+2)   { transform: rotate(1.5deg); }
+    #tray .block-card:nth-child(3n+3)   { transform: rotate(-0.8deg); }
+    .block-card {
+      transition: transform 0.15s ease;
+      /* 종이를 오려 붙인 듯한 입체 그림자 */
+      box-shadow: 3px 4px 0 rgba(0,0,0,0.12);
+    }
+    .block-card:hover { transform: rotate(0deg) scale(1.03); }
+    /* 정답 칸에 들어간 카드는 반듯하게 */
+    .drop-slot .block-card { transform: rotate(0deg); }
+    .block-card {
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .block-card.dragging { opacity: 0.4; }
+    .block-card.selected {
+      outline: 5px dashed #fb7185;
+      outline-offset: 3px;
+      transform: scale(1.04);
+    }
+    .drop-slot.over { background-color: #fef08a; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      75% { transform: translateX(8px); }
+    }
+    .shake { animation: shake 0.4s; }
+    @keyframes pop {
+      0% { transform: scale(0.6); }
+      70% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    .pop { animation: pop 0.3s; }
+    .quiz-btn.active {
+      background-color: #fb923c !important;
+      color: white !important;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+  <!-- ===================================================== -->
+  <!-- 👇👇 문제를 바꾸거나 추가하려면 여기만 고치세요 👇👇 -->
+  <!--  emoji: 문제 아이콘 / title: 제목 / steps: 올바른 순서 -->
+  <!-- ===================================================== -->
+  <script>
+    const 문제모음 = [
+      {
+        emoji: "🍚",
+        title: "급식 먹는 순서를 맞춰 보아요!",
+        steps: ["🧼 손을 깨끗이 씻어요", "🚶 줄 서서 선생님과 급식실로 가요", "🍽️ 순서대로 급식을 받아요", "😋 자리에 앉아 맛있게 먹어요", "🧹 남은 음식과 식판을 정리해요"]
+      },
+      {
+        emoji: "🧼",
+        title: "손 씻기 순서를 맞춰 보아요!",
+        steps: ["물을 틀어요", "비누를 묻혀요", "손을 깨끗이 문질러요", "물로 헹궈요", "수건으로 닦아요"]
+      },
+      {
+        emoji: "🦷",
+        title: "이 닦기 순서를 맞춰 보아요!",
+        steps: ["칫솔에 치약을 짜요", "이를 골고루 닦아요", "입을 물로 헹궈요", "칫솔을 깨끗이 씻어요"]
+      },
+      {
+        emoji: "🌱",
+        title: "씨앗을 심는 순서를 맞춰 보아요!",
+        steps: ["흙을 화분에 담아요", "씨앗을 흙 위에 놓아요", "흙을 살짝 덮어요", "물을 뿌려요", "햇빛이 드는 곳에 두어요"]
+      },
+      {
+        emoji: "🥪",
+        title: "샌드위치 만드는 순서예요!",
+        steps: ["식빵을 준비해요", "빵에 잼을 발라요", "채소와 재료를 올려요", "빵을 겹쳐 덮어요", "반으로 잘라요"]
+      },
+      {
+        emoji: "🎨",
+        title: "그림 그리는 순서를 맞춰 보아요!",
+        steps: ["도화지를 펴요", "연필로 밑그림을 그려요", "색을 칠해요", "이름을 적어요"]
+      },
+      {
+        emoji: "🦋",
+        title: "애벌레가 나비가 되는 순서예요!",
+        steps: ["🥚 알에서 태어나요", "🐛 애벌레가 되어 잎을 먹어요", "🛡️ 번데기가 되어요", "🦋 나비가 되어 날아가요"]
+      },
+      {
+        emoji: "✈️",
+        title: "종이비행기 접는 순서를 맞춰 보아요!",
+        steps: ["📄 색종이를 반으로 접어요", "📐 위쪽 모서리를 접어요", "🔺 날개를 접어요", "🛩️ 완성해서 날려요"]
+      }
+    ];
+  </script>
+  <!-- ===================================================== -->
+
+  <!-- 문제 선택 버튼 -->
+  <div id="quizPicker" class="flex flex-wrap justify-center gap-2 mb-5 max-w-5xl mx-auto"></div>
+
+  <!-- 제목 -->
+  <header class="text-center mb-6">
+    <h1 id="title" class="text-4xl md:text-5xl font-extrabold text-[#E08A7B]"></h1>
+    <p class="text-lg md:text-xl text-gray-400 mt-2">
+      👉 왼쪽 카드를 오른쪽 빈 칸으로 옮겨 순서를 맞춰 보세요! ✨
+    </p>
+  </header>
+
+  <!-- 좌우 이등분 레이아웃 -->
+  <main class="flex flex-col md:flex-row gap-6 max-w-6xl mx-auto items-stretch">
+
+    <!-- 왼쪽: 준비 공간 -->
+    <section class="flex-1 rounded-[2rem] p-5 shadow-md border-4 border-dashed border-amber-300" style="background:rgba(255,253,247,0.88);">
+      <h2 class="text-2xl font-bold text-amber-600 mb-2 text-center">📦 준비 공간</h2>
+      <p class="text-sm text-gray-400 text-center mb-4">잘못 넣었으면 카드를 콩콩 <b>두 번 톡톡</b> 하세요!</p>
+      <div id="tray" class="flex flex-col gap-4 min-h-[120px]"></div>
+    </section>
+
+    <!-- 화살표 -->
+    <div class="flex items-center justify-center text-4xl">
+      <span class="hidden md:block">➡️</span>
+      <span class="md:hidden">⬇️</span>
+    </div>
+
+    <!-- 오른쪽: 정답 공간 -->
+    <section class="flex-1 rounded-[2rem] p-5 shadow-md border-4 border-dashed border-emerald-300" style="background:rgba(247,255,251,0.88);">
+      <h2 class="text-2xl font-bold text-emerald-600 mb-4 text-center">✅ 정답 공간</h2>
+      <div id="answer" class="flex flex-col gap-4"></div>
+    </section>
+  </main>
+
+  <!-- 버튼 -->
+  <div class="text-center mt-8 flex flex-wrap justify-center gap-4">
+    <button id="checkBtn"
+      class="bg-emerald-400 hover:bg-emerald-500 active:scale-95 text-white text-2xl font-bold py-4 px-10 rounded-full shadow-lg transition">
+      🎯 정답 확인하기
+    </button>
+    <button id="resetBtn"
+      class="bg-amber-300 hover:bg-amber-400 active:scale-95 text-white text-2xl font-bold py-4 px-10 rounded-full shadow-lg transition">
+      🔄 다시 하기
+    </button>
+  </div>
+
+  <!-- 귀여운 알림창 -->
+  <div id="modal" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4 z-50">
+    <div class="bg-white rounded-[2rem] p-8 max-w-sm w-full text-center shadow-2xl">
+      <div id="modalIcon" class="text-7xl mb-4 pop"></div>
+      <p id="modalText" class="text-2xl font-bold mb-6 whitespace-pre-line"></p>
+      <button id="modalClose"
+        class="bg-sky-400 hover:bg-sky-500 text-white text-xl font-bold py-3 px-8 rounded-full">
+        확인
+      </button>
+    </div>
+  </div>
+
+<script>
+/* ============================================================
+   순서 맞추기 게임
+   - PC: HTML5 Drag and Drop API
+   - 태블릿/폰: 카드 탭 → 빈 칸 탭 (터치 지원)
+   - 이벤트 위임 방식 사용
+============================================================ */
+
+// 동화책 톤 파스텔 색상 (부드럽고 따뜻하게)
+const 카드색상 = [
+  "bg-[#FFE0E0] border-[#FFB3B3] text-[#C25B5B]",
+  "bg-[#D9EEFF] border-[#A9D4F5] text-[#4A7BA6]",
+  "bg-[#FFF0CC] border-[#F5D98A] text-[#B8891F]",
+  "bg-[#E8DCFB] border-[#C9B3EE] text-[#7A5CA6]",
+  "bg-[#D8F5E3] border-[#A7E3C0] text-[#3F8C63]",
+  "bg-[#FFDDEC] border-[#F5B3D1] text-[#B85C8A]",
+  "bg-[#D5F0EF] border-[#A3DDDA] text-[#3F8C88]",
+  "bg-[#FFE6D0] border-[#F5C6A0] text-[#B87540]",
+];
+
+/* ---------- 효과음 (Web Audio API, 음원 파일 불필요) ---------- */
+let audioCtx = null;
+let masterGain = null;
+function getAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.8; // 전체 볼륨 (겹침 소리 깨짐 방지)
+    masterGain.connect(audioCtx.destination);
+  }
+  if (audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
+// 음 하나 재생 (vol 기본값을 키워 전체적으로 더 크게)
+function beep(freq, start, dur, type = "sine", vol = 0.5) {
+  const ctx = getAudio();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  osc.connect(gain);
+  gain.connect(masterGain);
+  const t = ctx.currentTime + start;
+  gain.gain.setValueAtTime(0.0001, t);
+  gain.gain.exponentialRampToValueAtTime(vol, t + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  osc.start(t);
+  osc.stop(t + dur + 0.02);
+}
+// 화음(여러 음 동시에) → 팡파레용
+function chord(freqs, start, dur, type = "square", vol = 0.35) {
+  freqs.forEach((f) => beep(f, start, dur, type, vol));
+}
+
+// 카드 놓을 때: 밝고 또렷한 '똑' 소리
+function playDrop() { beep(600, 0, 0.12, "triangle", 0.45); }
+
+// 정답: 신나는 팡파레! (따-따-따-따♪ + 반짝이 효과)
+function playCorrect() {
+  // 팡파레 멜로디 (트럼펫 느낌 square 파형)
+  beep(523.25, 0.00, 0.15, "square", 0.5);  // 도
+  beep(523.25, 0.15, 0.15, "square", 0.5);  // 도
+  beep(523.25, 0.30, 0.15, "square", 0.5);  // 도
+  beep(659.25, 0.45, 0.55, "square", 0.55); // 미 (길게)
+  // 마지막에 풍성한 화음 팡!
+  chord([523.25, 659.25, 783.99, 1046.5], 0.55, 0.7, "square", 0.4); // 도미솔도 화음
+  // 반짝이 효과 (높은 음 톡톡톡)
+  beep(1568, 0.65, 0.1, "sine", 0.3);
+  beep(2093, 0.78, 0.1, "sine", 0.3);
+  beep(1568, 0.91, 0.12, "sine", 0.3);
+}
+
+// 오답: 아쉬운 하강음 (좀 더 또렷하게)
+function playWrong() {
+  beep(392, 0.00, 0.20, "sawtooth", 0.4);
+  beep(330, 0.20, 0.22, "sawtooth", 0.4);
+  beep(262, 0.42, 0.35, "sawtooth", 0.4);
+}
+
+const tray = document.getElementById("tray");
+const answer = document.getElementById("answer");
+const titleEl = document.getElementById("title");
+const picker = document.getElementById("quizPicker");
+let selectedCard = null;
+let 현재문제 = 문제모음[0];
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function makeCard(text) {
+  const idx = 현재문제.steps.indexOf(text);
+  const card = document.createElement("div");
+  card.className =
+    `block-card w-full cursor-pointer text-2xl md:text-3xl font-bold py-5 px-4 rounded-3xl border-4 shadow-sm text-center ${카드색상[idx % 카드색상.length]}`;
+  card.textContent = text;
+  card.draggable = true;
+  card.dataset.text = text;
+  return card;
+}
+
+function makeSlot(n) {
+  const slot = document.createElement("div");
+  slot.className =
+    "drop-slot min-h-[74px] rounded-3xl border-4 border-dashed border-gray-200 flex items-center gap-3 px-4 transition";
+  slot.dataset.slot = "1";
+  const num = document.createElement("span");
+  num.className = "text-2xl font-extrabold text-gray-300 w-8 text-center shrink-0";
+  num.textContent = n;
+  slot.appendChild(num);
+  return slot;
+}
+
+function buildPicker() {
+  문제모음.forEach((q, i) => {
+    const btn = document.createElement("button");
+    btn.className =
+      "quiz-btn bg-white text-3xl py-2 px-4 rounded-2xl shadow-sm border-2 border-amber-200 transition hover:bg-amber-100";
+    btn.textContent = q.emoji;
+    btn.title = q.title;
+    btn.dataset.idx = i;
+    picker.appendChild(btn);
+  });
+}
+
+function initGame() {
+  tray.innerHTML = "";
+  answer.innerHTML = "";
+  selectedCard = null;
+  titleEl.textContent = 현재문제.emoji + " " + 현재문제.title;
+
+  document.querySelectorAll(".quiz-btn").forEach((b) => {
+    b.classList.toggle("active", 문제모음[b.dataset.idx] === 현재문제);
+  });
+
+  shuffle(현재문제.steps).forEach((text) => tray.appendChild(makeCard(text)));
+  현재문제.steps.forEach((_, i) => answer.appendChild(makeSlot(i + 1)));
+}
+
+/* ---------- 문제 선택 (이벤트 위임) ---------- */
+picker.addEventListener("click", (e) => {
+  const btn = e.target.closest(".quiz-btn");
+  if (!btn) return;
+  현재문제 = 문제모음[btn.dataset.idx];
+  initGame();
+});
+
+/* ---------- HTML5 드래그 앤 드롭 (이벤트 위임) ---------- */
+let draggingEl = null;
+
+document.addEventListener("dragstart", (e) => {
+  const card = e.target.closest(".block-card");
+  if (!card) return;
+  draggingEl = card;
+  card.classList.add("dragging");
+});
+document.addEventListener("dragend", (e) => {
+  const card = e.target.closest(".block-card");
+  if (card) card.classList.remove("dragging");
+  draggingEl = null;
+});
+document.addEventListener("dragover", (e) => {
+  const zone = e.target.closest(".drop-slot, #tray");
+  if (!zone) return;
+  e.preventDefault();
+  if (zone.classList.contains("drop-slot")) zone.classList.add("over");
+});
+document.addEventListener("dragleave", (e) => {
+  const slot = e.target.closest(".drop-slot");
+  if (slot) slot.classList.remove("over");
+});
+document.addEventListener("drop", (e) => {
+  const zone = e.target.closest(".drop-slot, #tray");
+  if (!zone || !draggingEl) return;
+  e.preventDefault();
+  placeCard(draggingEl, zone);
+  zone.classList.remove("over");
+});
+
+/* ---------- 되돌리기: 카드 더블탭 → 준비 공간으로 ---------- */
+document.addEventListener("dblclick", (e) => {
+  const card = e.target.closest(".block-card");
+  if (!card) return;
+  // 오른쪽 정답 칸에 있는 카드만 되돌림
+  if (card.closest(".drop-slot")) {
+    card.classList.remove("selected");
+    if (selectedCard === card) selectedCard = null;
+    tray.appendChild(card);
+    playDrop();
+  }
+});
+
+/* ---------- 터치(탭) 방식 (이벤트 위임) ---------- */
+document.addEventListener("click", (e) => {
+  const card = e.target.closest(".block-card");
+  const zone = e.target.closest(".drop-slot, #tray");
+
+  if (card) {
+    if (selectedCard === card) {
+      card.classList.remove("selected");
+      selectedCard = null;
+    } else {
+      if (selectedCard) selectedCard.classList.remove("selected");
+      selectedCard = card;
+      card.classList.add("selected");
+    }
+    return;
+  }
+  if (selectedCard && zone) {
+    placeCard(selectedCard, zone);
+    selectedCard.classList.remove("selected");
+    selectedCard = null;
+  }
+});
+
+function placeCard(card, zone) {
+  if (zone.classList.contains("drop-slot")) {
+    const existing = zone.querySelector(".block-card");
+    if (existing && existing !== card) tray.appendChild(existing);
+    zone.appendChild(card);
+    playDrop(); // 빈 칸에 넣을 때만 소리
+  } else {
+    tray.appendChild(card);
+  }
+}
+
+/* ---------- 정답 확인 ---------- */
+const modal = document.getElementById("modal");
+const modalIcon = document.getElementById("modalIcon");
+const modalText = document.getElementById("modalText");
+
+function showModal(icon, text, color) {
+  modalIcon.textContent = icon;
+  modalText.textContent = text;
+  modalText.className = `text-2xl font-bold mb-6 whitespace-pre-line ${color}`;
+  modalIcon.classList.remove("pop");
+  void modalIcon.offsetWidth;
+  modalIcon.classList.add("pop");
+  modal.classList.remove("hidden");
+  modal.classList.add("flex");
+}
+
+document.getElementById("checkBtn").addEventListener("click", () => {
+  const slots = answer.querySelectorAll(".drop-slot");
+  const 배치된답 = [];
+  let 빈칸있음 = false;
+
+  slots.forEach((slot) => {
+    const card = slot.querySelector(".block-card");
+    if (!card) 빈칸있음 = true;
+    배치된답.push(card ? card.dataset.text : null);
+  });
+
+  if (빈칸있음) {
+    showModal("🤔", "아직 빈 칸이 있어요!\n모두 채워 주세요.", "text-amber-500");
+    return;
+  }
+
+  const 정답인가 = 배치된답.every((t, i) => t === 현재문제.steps[i]);
+
+  if (정답인가) {
+    playCorrect();
+    showModal("🎉", "정답이에요!\n참 잘했어요! 👏", "text-emerald-500");
+  } else {
+    playWrong();
+    showModal("💪", "조금 아쉬워요!\n다시 한번 해볼까요?", "text-rose-400");
+    answer.classList.add("shake");
+    setTimeout(() => answer.classList.remove("shake"), 400);
+  }
+});
+
+document.getElementById("modalClose").addEventListener("click", () => {
+  modal.classList.add("hidden");
+  modal.classList.remove("flex");
+});
+
+document.getElementById("resetBtn").addEventListener("click", initGame);
+
+buildPicker();
+initGame();
+</script>
+</body>
+</html>
