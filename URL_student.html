@@ -113,6 +113,15 @@
     font-family: sans-serif;
   }
 
+  .credit {
+    position: fixed;
+    bottom: 10px;
+    right: 14px;
+    font-size: 11px;
+    color: var(--muted);
+    opacity: 0.7;
+  }
+
   /* ── 연결 상태 표시 ── */
   #status {
     position: fixed;
@@ -126,8 +135,8 @@
 </head>
 <body>
 
-<div class="class-badge" id="badge" style="display:none;"></div>
 
+<div class="class-badge" id="badge" style="display:none;"></div>
 <!-- 학급 선택 (주소에 ?class= 가 없을 때만) -->
 <div id="pick">
   <h1>🏫 우리 반을 골라요</h1>
@@ -140,7 +149,7 @@
     <a class="grade-btn" href="?class=5">5학년</a>
     <a class="grade-btn" href="?class=6">6학년</a>
   </div>
-</div>
+  </div>
 
 <!-- 대기 화면 -->
 <div id="waiting">
@@ -159,6 +168,7 @@
 </div>
 
 <div id="status"></div>
+<div class="credit">ⓒ 조치원명동초등학교 디지털튜터</div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
