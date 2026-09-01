@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#5b57f5" />
+  <title>행운 스크래치 쿠폰</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%235b57f5'/%3E%3Ctext x='32' y='43' font-size='34' text-anchor='middle'%3E%F0%9F%8E%9F%EF%B8%8F%3C/text%3E%3C/svg%3E" />
+  <style>
+    :root {
+      --primary: #5b57f5;
+      --primary-deep: #4b47d7;
+      --primary-soft: #eef0ff;
+      --bg: #eef3fb;
+      --bg2: #f6f8fd;
+      --card: #ffffff;
+      --line: #dde6f4;
+      --text: #1e293b;
+      --muted: #667085;
+      --danger: #ef4444;
+      --success: #10b981;
+      --warning-bg: #fff7e8;
+      --warning-line: #f1cb6a;
+      --warning-text: #a16207;
+      --shadow: 0 12px 34px rgba(66, 81, 115, 0.08);
+      --shadow-soft: 0 4px 14px rgba(66, 81, 115, 0.06);
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+      --radius-sm: 12px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", Arial, sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, #eef3fb 0%, #f7f9fd 100%);
+    }
+    body { overflow-x: hidden; }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+
+    .topbar {
+      background: linear-gradient(135deg, #4b48df 0%, #645cff 100%);
+      color: white;
+      box-shadow: 0 10px 34px rgba(76, 72, 223, 0.18);
+    }
+    .topbar-inner {
+      max-width: 1160px;
+      margin: 0 auto;
+      min-height: 104px;
+      padding: 22px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .brand-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 15px;
+      display: grid;
+      place-items: center;
+      background: rgba(255,255,255,0.18);
+      font-size: 24px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+    }
+    .title {
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+    }
+    .subtitle {
+      margin-top: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.84);
+    }
+    .icon-btn {
+      border: 0;
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.16);
+      color: white;
+      font-size: 22px;
+      transition: transform .14s ease, background .14s ease;
+    }
+    .icon-btn:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.24);
+    }
+
+    .container {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 24px 24px 54px;
+    }
+    .summary-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      padding: 22px 24px;
+      box-shadow: var(--shadow-soft);
+      display: grid;
+      grid-template-columns: 1.2fr auto auto;
+      gap: 20px;
+      align-items: center;
+    }
+    .summary-main {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .summary-icon {
+      width: 64px;
+      height: 64px;
+      display: grid;
+      place-items: center;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #f2f4ff 0%, #e8edff 100%);
+      color: var(--primary);
+      font-size: 30px;
+      box-shadow: inset 0 0 0 1px #e5e9ff;
+    }
+    .small-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+    }
+    .big-number {
+      margin-top: 3px;
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+    .summary-stats {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+    .stat {
+      min-width: 88px;
+      text-align: center;
+      display: grid;
+      gap: 6px;
+    }
+    .stat strong {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      color: var(--primary);
+    }
+    .stat strong.danger { color: var(--danger); }
+    .divider {
+      width: 1px;
+      height: 46px;
+      background: var(--line);
+    }
+    .summary-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .soft-btn, .secondary-btn {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-weight: 800;
+      transition: transform .14s ease, background .14s ease, box-shadow .14s ease;
+    }
+    .soft-btn {
+      background: #f3f6fb;
+      color: #43516c;
+      box-shadow: inset 0 0 0 1px #edf1f7;
+    }
+    .soft-btn:hover, .secondary-btn:hover {
+      transform: translateY(-1px);
+    }
+    .secondary-btn {
+      background: white;
+      color: var(--primary);
+      box-shadow: inset 0 0 0 1px #dde5ff;
+    }
+    .notice {
+      margin-top: 22px;
+      background: var(--warning-bg);
+      border: 1px solid var(--warning-line);
+      color: var(--warning-text);
+      border-radius: 16px;
+      padding: 15px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .notice-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #fff0bf;
+      font-size: 13px;
+      flex: 0 0 auto;
+      margin-top: 1px;
+    }
+    .grid-head {
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .section-title {
+      font-size: 19px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+    .section-sub {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .coupon-grid {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .coupon {
+      min-height: 138px;
+      border: 1px solid #dae4f5;
+      background: linear-gradient(180deg, #ffffff 0%, #fcfdff 100%);
+      border-radius: 20px;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      box-shadow: var(--shadow-soft);
+      transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .coupon::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(99,91,255,0.06), transparent 35%);
+      pointer-events: none;
+    }
+    .coupon:hover {
+      transform: translateY(-3px);
+      border-color: #bdc8ff;
+      box-shadow: 0 16px 34px rgba(91, 87, 245, 0.12);
+    }
+    .coupon.used {
+      background: linear-gradient(180deg, #fafbfd 0%, #f6f8fb 100%);
+      border-color: #e4e9f2;
+    }
+    .coupon.used:hover {
+      transform: none;
+      box-shadow: var(--shadow-soft);
+    }
+    .coupon-num {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-weight: 900;
+      font-size: 17px;
+      box-shadow: inset 0 0 0 1px #e0e4ff;
+      margin-bottom: 8px;
+    }
+    .coupon-title {
+      font-size: 14px;
+      font-weight: 900;
+    }
+    .coupon-sub {
+      margin-top: 3px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #7b83ff;
+    }
+    .coupon.used .coupon-sub { color: #9aa3b2; }
+    .used-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: #eef2f6;
+      color: #758194;
+      font-size: 10px;
+      font-weight: 900;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+    }
+    .modal.hidden { display: none; }
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.58);
+      backdrop-filter: blur(4px);
+    }
+    .scratch-panel, .settings-panel {
+      position: relative;
+      z-index: 1;
+      background: white;
+      border-radius: 28px;
+      box-shadow: 0 28px 90px rgba(15, 23, 42, 0.28);
+      border: 1px solid rgba(220,226,240,0.8);
+    }
+    .scratch-panel {
+      width: min(94vw, 620px);
+      padding: 28px;
+    }
+    .settings-panel {
+      width: min(94vw, 720px);
+      max-height: 92vh;
+      overflow: auto;
+      padding: 28px;
+    }
+    .close-btn {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      border: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #f2f5f9;
+      color: #516072;
+      font-size: 24px;
+      line-height: 1;
+    }
+    .scratch-head { text-align: center; padding: 0 22px 6px; }
+    .scratch-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: #f4f5ff;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .scratch-head h2 {
+      margin: 12px 0 6px;
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+    .scratch-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .scratch-card-wrap {
+      width: 100%;
+      aspect-ratio: 1.55 / 1;
+      margin-top: 18px;
+      position: relative;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 18px 36px rgba(91, 87, 245, 0.14);
+      background: #fafbff;
+    }
+    .result-card {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 18px;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(255,255,255,0.9) 0 7%, transparent 8%),
+        radial-gradient(circle at 90% 20%, rgba(255,255,255,0.55) 0 8%, transparent 9%),
+        linear-gradient(135deg, #eef1ff 0%, #ffffff 48%, #edf7ff 100%);
+    }
+    .result-emoji { font-size: clamp(42px, 8vw, 68px); }
+    .result-label {
+      margin-top: 8px;
+      font-size: clamp(26px, 5vw, 36px);
+      font-weight: 1000;
+      letter-spacing: -0.04em;
+      color: var(--primary);
+    }
+    .result-prize {
+      margin-top: 8px;
+      font-size: clamp(18px, 4vw, 28px);
+      font-weight: 900;
+    }
+    .result-sub {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+    }
+    #scratchCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      cursor: crosshair;
+    }
+    .scratch-progress-wrap { margin-top: 18px; }
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .scratch-hint {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .progress-value {
+      font-size: 13px;
+      color: var(--primary);
+      font-weight: 900;
+    }
+    .progress-track {
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: #edf1f6;
+    }
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #7a74ff 0%, #4f46e5 100%);
+      transition: width .12s linear;
+    }
+    .primary-btn {
+      border: 0;
+      border-radius: 16px;
+      padding: 15px 18px;
+      background: linear-gradient(135deg, #6a63ff 0%, #4f46e5 100%);
+      color: white;
+      font-weight: 900;
+      font-size: 16px;
+      box-shadow: 0 12px 26px rgba(79, 70, 229, 0.2);
+    }
+    .primary-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .mt-16 { margin-top: 16px; }
+
+    .settings-panel h2 {
+      margin: 4px 0 8px;
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+    .settings-desc {
+      margin: 0 0 20px;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 14px;
+      font-weight: 700;
+    }
+    .settings-shell {
+      display: grid;
+      grid-template-columns: 1.35fr 0.95fr;
+      gap: 18px;
+    }
+    .settings-block {
+      background: #fbfcff;
+      border: 1px solid #e7ecf6;
+      border-radius: 20px;
+      padding: 18px;
+    }
+    .block-title {
+      font-size: 15px;
+      font-weight: 900;
+      margin-bottom: 14px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .field.full { grid-column: 1 / -1; }
+    .field > span {
+      font-size: 14px;
+      font-weight: 900;
+    }
+    .field input, .field textarea {
+      width: 100%;
+      border: 1px solid #d7dfec;
+      background: white;
+      color: var(--text);
+      border-radius: 14px;
+      padding: 12px 13px;
+      outline: none;
+      transition: border-color .12s ease, box-shadow .12s ease;
+    }
+    .field textarea {
+      resize: vertical;
+      min-height: 152px;
+      line-height: 1.58;
+    }
+    .field input:focus, .field textarea:focus {
+      border-color: #8b84ff;
+      box-shadow: 0 0 0 4px rgba(99,91,255,0.1);
+    }
+    .field small {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .settings-preview {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .preview-box {
+      background: white;
+      border: 1px solid #e4eaf6;
+      border-radius: 16px;
+      padding: 14px 10px;
+      text-align: center;
+    }
+    .preview-box span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .preview-box strong {
+      display: block;
+      margin-top: 7px;
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--primary);
+      letter-spacing: -0.03em;
+    }
+    .side-note {
+      margin-top: 14px;
+      background: linear-gradient(180deg, #f5f7ff 0%, #f9fbff 100%);
+      border: 1px dashed #ccd5ff;
+      border-radius: 18px;
+      padding: 16px;
+      line-height: 1.65;
+      font-size: 13px;
+      font-weight: 700;
+      color: #52617a;
+    }
+    .settings-actions {
+      margin-top: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 10px;
+    }
+
+    .teacher-preview-panel {
+      position: relative;
+      z-index: 1;
+      width: min(96vw, 1180px);
+      max-height: 92vh;
+      overflow: auto;
+      background: white;
+      border-radius: 28px;
+      box-shadow: 0 28px 90px rgba(15, 23, 42, 0.30);
+      border: 1px solid rgba(220,226,240,0.9);
+      padding: 28px;
+    }
+    .teacher-preview-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      padding-right: 46px;
+    }
+    .teacher-preview-head h2 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+    }
+    .teacher-preview-head p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.6;
+    }
+    .teacher-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 10px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: #fff4e6;
+      color: #b45309;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    .teacher-summary {
+      margin-top: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .teacher-summary-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: #f5f7fb;
+      color: #536176;
+      font-size: 13px;
+      font-weight: 800;
+      border: 1px solid #e6ebf4;
+    }
+    .teacher-summary-chip strong {
+      color: var(--text);
+      font-weight: 900;
+    }
+    .teacher-preview-grid {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .teacher-coupon-card {
+      min-height: 104px;
+      border-radius: 16px;
+      padding: 12px 10px;
+      border: 1px solid #e1e7f1;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .teacher-coupon-card.win {
+      background: linear-gradient(180deg, #f3f1ff 0%, #faf9ff 100%);
+      border-color: #cbc7ff;
+      box-shadow: inset 0 0 0 1px rgba(91,87,245,0.05);
+    }
+    .teacher-coupon-card.lose {
+      background: linear-gradient(180deg, #fafbfc 0%, #f5f7fa 100%);
+      border-color: #e1e6ee;
+    }
+    .teacher-coupon-card.used::after {
+      content: "사용 완료";
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      padding: 3px 6px;
+      border-radius: 999px;
+      background: rgba(30,41,59,0.08);
+      color: #667085;
+      font-size: 9px;
+      font-weight: 900;
+    }
+    .teacher-card-num {
+      color: #718096;
+      font-size: 11px;
+      font-weight: 900;
+    }
+    .teacher-card-result {
+      margin-top: 5px;
+      font-size: 15px;
+      font-weight: 1000;
+      letter-spacing: -0.03em;
+    }
+    .teacher-coupon-card.win .teacher-card-result { color: var(--primary); }
+    .teacher-coupon-card.lose .teacher-card-result { color: #778195; }
+    .teacher-card-prize {
+      margin-top: 5px;
+      width: 100%;
+      color: #344054;
+      font-size: 11px;
+      line-height: 1.35;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+    .teacher-preview-foot {
+      margin-top: 18px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .teacher-preview-foot .primary-btn {
+      min-width: 160px;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translateX(-50%);
+      z-index: 200;
+      background: #192133;
+      color: white;
+      padding: 12px 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 800;
+      box-shadow: 0 12px 34px rgba(0,0,0,0.22);
+    }
+    .toast.hidden { display: none; }
+
+    @media (max-width: 980px) {
+      .summary-card { grid-template-columns: 1fr 1fr; }
+      .summary-actions { grid-column: 1 / -1; justify-content: flex-start; }
+      .coupon-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .settings-shell { grid-template-columns: 1fr; }
+      .teacher-preview-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 720px) {
+      .topbar-inner {
+        min-height: 90px;
+        padding: 18px 16px;
+      }
+      .brand-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 13px;
+        font-size: 21px;
+      }
+      .title { font-size: 24px; }
+      .subtitle { font-size: 12px; }
+      .container { padding: 16px 14px 34px; }
+      .summary-card { grid-template-columns: 1fr; gap: 16px; padding: 18px; }
+      .summary-stats { justify-content: flex-start; }
+      .summary-actions { grid-column: auto; }
+      .coupon-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .coupon { min-height: 124px; border-radius: 18px; }
+      .scratch-panel, .settings-panel { padding: 22px 18px; border-radius: 22px; }
+      .scratch-head h2 { font-size: 26px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .settings-actions { grid-template-columns: 1fr; }
+      .settings-preview { grid-template-columns: 1fr 1fr 1fr; }
+      .notice { font-size: 12px; line-height: 1.6; }
+      .grid-head { align-items: flex-start; flex-direction: column; }
+      .teacher-preview-panel { padding: 22px 16px; border-radius: 22px; }
+      .teacher-preview-head h2 { font-size: 24px; }
+      .teacher-preview-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+      .teacher-coupon-card { min-height: 98px; padding: 10px 8px; }
+      .teacher-preview-foot .primary-btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-icon">🎁</div>
+        <div>
+          <div class="title">행운 스크래치 쿠폰</div>
+          <div class="subtitle">원하는 쿠폰을 골라 손가락이나 마우스로 긁어보세요!</div>
+        </div>
+      </div>
+      <button id="openSettings" class="icon-btn" aria-label="설정">⚙️</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="summary-card">
+      <div class="summary-main">
+        <div class="summary-icon">🎟️</div>
+        <div>
+          <div class="small-label">전체 쿠폰 수</div>
+          <div class="big-number"><span id="totalCount">20</span>개</div>
+        </div>
+      </div>
+
+      <div class="summary-stats">
+        <div class="stat">
+          <span class="small-label">남은 쿠폰</span>
+          <strong id="remainingCount">20개</strong>
+        </div>
+        <div class="divider"></div>
+        <div class="stat">
+          <span class="small-label">확인 완료</span>
+          <strong class="danger" id="usedCount">0개</strong>
+        </div>
+      </div>
+
+      <div class="summary-actions">
+        <button id="previewCoupons" class="secondary-btn">👁 쿠폰 위치 확인</button>
+        <button id="addCoupon" class="secondary-btn">＋ 쿠폰 추가</button>
+        <button id="resetAll" class="soft-btn">↻ 전체 초기화</button>
+      </div>
+    </section>
+
+    <section class="notice">
+      <span class="notice-icon">i</span>
+      <span>원하는 쿠폰을 선택한 뒤, 크게 열린 쿠폰의 은색 영역을 손가락이나 마우스로 긁어 결과를 확인하세요. 사용이 끝난 쿠폰은 자동으로 ‘확인 완료’ 상태로 바뀝니다.</span>
+    </section>
+
+    <section class="grid-head">
+      <div>
+        <div class="section-title">스크래치 쿠폰</div>
+        <div class="section-sub">기본 20장, 최대 40장까지 확장 가능</div>
+      </div>
+    </section>
+
+    <section id="couponGrid" class="coupon-grid" aria-label="스크래치 쿠폰 목록"></section>
+  </main>
+
+  <div id="scratchModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="scratchTitle">
+    <div class="modal-backdrop"></div>
+    <div class="scratch-panel">
+      <button id="closeScratch" class="close-btn" aria-label="닫기">×</button>
+      <div class="scratch-head">
+        <div class="scratch-kicker">✨ 행운의 스크래치 쿠폰</div>
+        <h2 id="scratchTitle">1번 쿠폰</h2>
+        <p>은색 영역을 손가락이나 마우스로 충분히 긁어 결과를 확인해보세요.</p>
+      </div>
+
+      <div class="scratch-card-wrap">
+        <div class="result-card" id="resultCard">
+          <div id="resultEmoji" class="result-emoji">🎉</div>
+          <div id="resultLabel" class="result-label">당첨!</div>
+          <div id="resultPrize" class="result-prize">행운의 선물</div>
+          <div id="resultSub" class="result-sub">축하합니다!</div>
+        </div>
+        <canvas id="scratchCanvas" aria-label="스크래치 영역"></canvas>
+      </div>
+
+      <div class="scratch-progress-wrap">
+        <div class="progress-meta">
+          <div id="scratchHint" class="scratch-hint">조금 더 긁어주세요.</div>
+          <div id="progressValue" class="progress-value">0%</div>
+        </div>
+        <div class="progress-track"><div id="scratchProgress" class="progress-bar"></div></div>
+      </div>
+
+      <button id="doneScratch" class="primary-btn mt-16" disabled>확인 완료</button>
+    </div>
+  </div>
+
+  <div id="teacherPreviewModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="teacherPreviewTitle">
+    <div class="modal-backdrop"></div>
+    <div class="teacher-preview-panel">
+      <button id="closeTeacherPreview" class="close-btn" aria-label="닫기">×</button>
+      <div class="teacher-preview-head">
+        <div>
+          <div class="teacher-badge">👩‍🏫 교사용 확인 화면</div>
+          <h2 id="teacherPreviewTitle">쿠폰 위치 한눈에 보기</h2>
+          <p>현재 섞여 있는 쿠폰의 실제 내용을 번호별로 보여줍니다. 이 화면을 열어도 쿠폰 사용 여부나 결과는 변경되지 않습니다.</p>
+        </div>
+      </div>
+      <div class="teacher-summary">
+        <div class="teacher-summary-chip">전체 <strong id="teacherTotalCount">20장</strong></div>
+        <div class="teacher-summary-chip">당첨 <strong id="teacherWinCount">5장</strong></div>
+        <div class="teacher-summary-chip">꽝 <strong id="teacherLoseCount">15장</strong></div>
+      </div>
+      <div id="teacherPreviewGrid" class="teacher-preview-grid" aria-label="쿠폰 위치 확인 목록"></div>
+      <div class="teacher-preview-foot">
+        <button id="teacherPreviewDone" class="primary-btn">확인 완료</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-backdrop"></div>
+    <div class="settings-panel">
+      <button id="closeSettings" class="close-btn" aria-label="닫기">×</button>
+      <h2 id="settingsTitle">쿠폰 설정</h2>
+      <p class="settings-desc">설정을 저장하면 쿠폰 결과가 새로 섞입니다. 이미 사용한 쿠폰이 있는 경우 확인창이 나타납니다.</p>
+
+      <div class="settings-shell">
+        <div class="settings-block">
+          <div class="block-title">기본 설정</div>
+          <div class="form-grid">
+            <label class="field">
+              <span>화면 제목</span>
+              <input id="titleInput" type="text" maxlength="40" value="행운 스크래치 쿠폰" />
+              <small>상단 제목에 표시됩니다.</small>
+            </label>
+
+            <label class="field">
+              <span>전체 쿠폰 수</span>
+              <input id="couponCountInput" type="number" min="1" max="40" value="20" />
+              <small>최대 40장까지 설정 가능</small>
+            </label>
+
+            <label class="field">
+              <span>당첨 쿠폰 수</span>
+              <input id="winCountInput" type="number" min="0" max="20" value="5" />
+              <small id="loseCountText">꽝 15장</small>
+            </label>
+
+            <div class="field">
+              <span>당첨 비율 미리보기</span>
+              <input id="ratePreviewInput" type="text" value="25%" disabled />
+              <small>당첨 수에 따라 자동 계산됩니다.</small>
+            </div>
+
+            <label class="field full">
+              <span>당첨 상품</span>
+              <textarea id="prizeInput" rows="6" placeholder="한 줄에 상품 하나씩 입력하세요.&#10;예)&#10;간식&#10;하리보&#10;과자"></textarea>
+              <small>당첨 쿠폰에는 입력한 상품이 무작위로 배정됩니다.</small>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-block">
+          <div class="block-title">설정 미리보기</div>
+          <div class="settings-preview">
+            <div class="preview-box">
+              <span>당첨</span>
+              <strong id="previewWins">5장</strong>
+            </div>
+            <div class="preview-box">
+              <span>꽝</span>
+              <strong id="previewLoses">15장</strong>
+            </div>
+            <div class="preview-box">
+              <span>당첨 비율</span>
+              <strong id="previewRate">25%</strong>
+            </div>
+          </div>
+          <div class="side-note">
+            추천 사용법
+            <br>• 당첨 수를 먼저 정하고 상품을 입력하면 전체 쿠폰에 랜덤으로 배치됩니다.
+            <br>• 예: 20장 중 당첨 5장, 꽝 15장
+            <br>• 이미 사용한 쿠폰이 있다면 저장 시 새로 섞이므로 확인창이 뜹니다.
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-actions">
+        <button id="cancelSettings" class="soft-btn">취소</button>
+        <button id="saveSettings" class="primary-btn">설정 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const STORAGE_KEY = 'teacherScratchCouponWidget_v3';
+      const DEFAULTS = {
+        title: '행운 스크래치 쿠폰',
+        total: 20,
+        winCount: 5,
+        prizes: ['간식', '하리보', '과자'],
+        coupons: []
+      };
+
+      const $ = (id) => document.getElementById(id);
+
+      const el = {
+        totalCount: $('totalCount'),
+        remainingCount: $('remainingCount'),
+        usedCount: $('usedCount'),
+        couponGrid: $('couponGrid'),
+        addCoupon: $('addCoupon'),
+        resetAll: $('resetAll'),
+        previewCoupons: $('previewCoupons'),
+        teacherPreviewModal: $('teacherPreviewModal'),
+        closeTeacherPreview: $('closeTeacherPreview'),
+        teacherPreviewDone: $('teacherPreviewDone'),
+        teacherPreviewGrid: $('teacherPreviewGrid'),
+        teacherTotalCount: $('teacherTotalCount'),
+        teacherWinCount: $('teacherWinCount'),
+        teacherLoseCount: $('teacherLoseCount'),
+        openSettings: $('openSettings'),
+        settingsModal: $('settingsModal'),
+        closeSettings: $('closeSettings'),
+        cancelSettings: $('cancelSettings'),
+        saveSettings: $('saveSettings'),
+        couponCountInput: $('couponCountInput'),
+        winCountInput: $('winCountInput'),
+        loseCountText: $('loseCountText'),
+        prizeInput: $('prizeInput'),
+        titleInput: $('titleInput'),
+        ratePreviewInput: $('ratePreviewInput'),
+        previewWins: $('previewWins'),
+        previewLoses: $('previewLoses'),
+        previewRate: $('previewRate'),
+        scratchModal: $('scratchModal'),
+        closeScratch: $('closeScratch'),
+        scratchTitle: $('scratchTitle'),
+        scratchCanvas: $('scratchCanvas'),
+        scratchProgress: $('scratchProgress'),
+        progressValue: $('progressValue'),
+        scratchHint: $('scratchHint'),
+        doneScratch: $('doneScratch'),
+        resultEmoji: $('resultEmoji'),
+        resultLabel: $('resultLabel'),
+        resultPrize: $('resultPrize'),
+        resultSub: $('resultSub'),
+        toast: $('toast')
+      };
+
+      let state = loadState();
+      let activeIndex = null;
+      let scratching = false;
+      let lastPoint = null;
+      let scratchCheckTimer = null;
+      let revealedEnough = false;
+
+      function clamp(n, min, max) {
+        return Math.max(min, Math.min(max, n));
+      }
+
+      function shuffle(array) {
+        const a = [...array];
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      }
+
+      function generateCoupons(total, winCount, prizes) {
+        const safeTotal = clamp(Number(total) || 20, 1, 40);
+        const safeWins = clamp(Number(winCount) || 0, 0, safeTotal);
+        const prizeList = prizes.length ? prizes : ['행운의 선물'];
+        const results = [];
+
+        for (let i = 0; i < safeWins; i++) {
+          results.push({ isWin: true, prize: prizeList[i % prizeList.length] });
+        }
+        while (results.length < safeTotal) {
+          results.push({ isWin: false, prize: '' });
+        }
+
+        return shuffle(results).map((result, index) => ({
+          id: index + 1,
+          used: false,
+          ...result
+        }));
+      }
+
+      function loadState() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && Array.isArray(parsed.coupons) && parsed.coupons.length) {
+              parsed.total = clamp(Number(parsed.total) || parsed.coupons.length, 1, 40);
+              parsed.winCount = clamp(Number(parsed.winCount) || 0, 0, parsed.total);
+              parsed.prizes = Array.isArray(parsed.prizes) && parsed.prizes.length ? parsed.prizes : [...DEFAULTS.prizes];
+              parsed.title = parsed.title || DEFAULTS.title;
+              return parsed;
+            }
+          }
+        } catch (e) {
+          console.warn('저장된 데이터를 불러오지 못했습니다.', e);
+        }
+
+        const fresh = { ...DEFAULTS };
+        fresh.prizes = [...DEFAULTS.prizes];
+        fresh.coupons = generateCoupons(fresh.total, fresh.winCount, fresh.prizes);
+        return fresh;
+      }
+
+      function saveState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      }
+
+      function render() {
+        document.querySelector('.title').textContent = state.title;
+        document.title = state.title;
+
+        const used = state.coupons.filter(c => c.used).length;
+        el.totalCount.textContent = state.coupons.length;
+        el.remainingCount.textContent = `${state.coupons.length - used}개`;
+        el.usedCount.textContent = `${used}개`;
+
+        el.couponGrid.innerHTML = '';
+        state.coupons.forEach((coupon, index) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `coupon${coupon.used ? ' used' : ''}`;
+          btn.setAttribute('aria-label', `${coupon.id}번 스크래치 쿠폰${coupon.used ? ', 확인 완료' : ''}`);
+          btn.innerHTML = `
+            ${coupon.used ? '<span class="used-badge">확인 완료</span>' : ''}
+            <span class="coupon-num">${coupon.id}</span>
+            <span class="coupon-title">스크래치 쿠폰</span>
+            <span class="coupon-sub">${coupon.used ? '이미 확인한 쿠폰' : '터치하여 긁기'}</span>
+          `;
+          btn.addEventListener('click', () => {
+            if (coupon.used) {
+              showToast('이미 확인한 쿠폰입니다.');
+              return;
+            }
+            openScratch(index);
+          });
+          el.couponGrid.appendChild(btn);
+        });
+      }
+
+      function showToast(message) {
+        el.toast.textContent = message;
+        el.toast.classList.remove('hidden');
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => el.toast.classList.add('hidden'), 1800);
+      }
+
+      function anyUsed() {
+        return state.coupons.some(c => c.used);
+      }
+
+      function resetResultsKeepingSettings() {
+        state.coupons = generateCoupons(state.total, state.winCount, state.prizes);
+        saveState();
+        render();
+      }
+
+      function confirmRebuild(message) {
+        if (!anyUsed()) return true;
+        return window.confirm(message);
+      }
+
+      function openTeacherPreview() {
+        const wins = state.coupons.filter(c => c.isWin).length;
+        const loses = state.coupons.length - wins;
+        el.teacherTotalCount.textContent = `${state.coupons.length}장`;
+        el.teacherWinCount.textContent = `${wins}장`;
+        el.teacherLoseCount.textContent = `${loses}장`;
+
+        el.teacherPreviewGrid.innerHTML = '';
+        state.coupons.forEach((coupon) => {
+          const card = document.createElement('div');
+          card.className = `teacher-coupon-card ${coupon.isWin ? 'win' : 'lose'}${coupon.used ? ' used' : ''}`;
+          const resultText = coupon.isWin ? '🎉 당첨' : '꽝';
+          const prizeText = coupon.isWin ? (coupon.prize || '행운의 선물') : '—';
+          card.innerHTML = `
+            <div class="teacher-card-num">${coupon.id}번</div>
+            <div class="teacher-card-result">${resultText}</div>
+            <div class="teacher-card-prize">${escapeHtml(prizeText)}</div>
+          `;
+          el.teacherPreviewGrid.appendChild(card);
+        });
+
+        el.teacherPreviewModal.classList.remove('hidden');
+      }
+
+      function closeTeacherPreview() {
+        el.teacherPreviewModal.classList.add('hidden');
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function openSettings() {
+        el.couponCountInput.value = state.total;
+        el.winCountInput.value = state.winCount;
+        el.prizeInput.value = state.prizes.join('\n');
+        el.titleInput.value = state.title;
+        updateSettingsPreview();
+        el.settingsModal.classList.remove('hidden');
+      }
+
+      function closeSettings() {
+        el.settingsModal.classList.add('hidden');
+      }
+
+      function updateSettingsPreview() {
+        const total = clamp(parseInt(el.couponCountInput.value, 10) || 1, 1, 40);
+        let wins = parseInt(el.winCountInput.value, 10);
+        if (Number.isNaN(wins)) wins = 0;
+        wins = clamp(wins, 0, total);
+        el.winCountInput.max = total;
+        if (document.activeElement !== el.winCountInput) {
+          el.winCountInput.value = wins;
+        }
+        const loses = total - wins;
+        const rate = total ? Math.round((wins / total) * 100) : 0;
+        el.loseCountText.textContent = `꽝 ${loses}장`;
+        el.previewWins.textContent = `${wins}장`;
+        el.previewLoses.textContent = `${loses}장`;
+        el.previewRate.textContent = `${rate}%`;
+        el.ratePreviewInput.value = `${rate}%`;
+      }
+
+      function saveSettings() {
+        const total = clamp(parseInt(el.couponCountInput.value, 10) || 20, 1, 40);
+        let wins = parseInt(el.winCountInput.value, 10);
+        if (Number.isNaN(wins)) wins = 0;
+        wins = clamp(wins, 0, total);
+        const prizes = el.prizeInput.value.split('\n').map(v => v.trim()).filter(Boolean);
+        const title = el.titleInput.value.trim() || DEFAULTS.title;
+
+        if (wins > 0 && prizes.length === 0) {
+          window.alert('당첨 쿠폰이 있다면 상품을 한 개 이상 입력해주세요.');
+          return;
+        }
+
+        const changed = total !== state.total || wins !== state.winCount ||
+          title !== state.title || JSON.stringify(prizes) !== JSON.stringify(state.prizes);
+
+        if (changed && !confirmRebuild('설정을 변경하면 현재 쿠폰의 사용 기록과 결과가 모두 새로 섞입니다. 계속할까요?')) {
+          return;
+        }
+
+        state.total = total;
+        state.winCount = wins;
+        state.prizes = prizes.length ? prizes : [...DEFAULTS.prizes];
+        state.title = title;
+        state.coupons = generateCoupons(total, wins, state.prizes);
+        saveState();
+        render();
+        closeSettings();
+        showToast('설정을 저장하고 쿠폰을 새로 섞었습니다.');
+      }
+
+      function addOneCoupon() {
+        if (state.total >= 40) {
+          showToast('쿠폰은 최대 40장까지 만들 수 있습니다.');
+          return;
+        }
+        if (!confirmRebuild('쿠폰 수를 늘리면 모든 쿠폰의 결과가 다시 섞입니다. 계속할까요?')) return;
+
+        state.total += 1;
+        const rate = state.coupons.length ? state.winCount / state.coupons.length : 0;
+        state.winCount = clamp(Math.round(state.total * rate), 0, state.total);
+        state.coupons = generateCoupons(state.total, state.winCount, state.prizes);
+        saveState();
+        render();
+        showToast(`${state.total}장으로 늘리고 새로 섞었습니다.`);
+      }
+
+      function resetAll() {
+        const ok = window.confirm('모든 쿠폰의 사용 기록을 지우고 결과를 다시 섞을까요?\n설정한 쿠폰 수, 당첨 수, 상품은 유지됩니다.');
+        if (!ok) return;
+        resetResultsKeepingSettings();
+        showToast('전체 초기화가 완료되었습니다.');
+      }
+
+      function openScratch(index) {
+        activeIndex = index;
+        const coupon = state.coupons[index];
+        if (!coupon || coupon.used) return;
+
+        el.scratchTitle.textContent = `${coupon.id}번 쿠폰`;
+        if (coupon.isWin) {
+          el.resultEmoji.textContent = '🎉';
+          el.resultLabel.textContent = '당첨!';
+          el.resultPrize.textContent = coupon.prize || '행운의 선물';
+          el.resultSub.textContent = '축하합니다! 선생님께 상품을 받아가세요.';
+        } else {
+          el.resultEmoji.textContent = '🍀';
+          el.resultLabel.textContent = '아쉽지만 꽝!';
+          el.resultPrize.textContent = '다음 행운을 기대해요';
+          el.resultSub.textContent = '참여해주셔서 감사합니다.';
+        }
+
+        el.scratchProgress.style.width = '0%';
+        el.progressValue.textContent = '0%';
+        el.scratchHint.textContent = '조금 더 긁어주세요.';
+        el.doneScratch.disabled = true;
+        revealedEnough = false;
+        el.scratchModal.classList.remove('hidden');
+
+        requestAnimationFrame(() => requestAnimationFrame(setupScratchCanvas));
+      }
+
+      function closeScratch() {
+        if (activeIndex !== null && !state.coupons[activeIndex]?.used && !revealedEnough) {
+          const ok = window.confirm('아직 결과 확인이 완료되지 않았습니다. 쿠폰을 닫을까요?');
+          if (!ok) return;
+        }
+        el.scratchModal.classList.add('hidden');
+        activeIndex = null;
+        scratching = false;
+        lastPoint = null;
+        clearTimeout(scratchCheckTimer);
+      }
+
+      function setupScratchCanvas() {
+        const canvas = el.scratchCanvas;
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = Math.max(1, Math.round(rect.width * dpr));
+        canvas.height = Math.max(1, Math.round(rect.height * dpr));
+
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        const grad = ctx.createLinearGradient(0, 0, rect.width, rect.height);
+        grad.addColorStop(0, '#cfd2d8');
+        grad.addColorStop(0.35, '#f3f4f6');
+        grad.addColorStop(0.68, '#b9bec7');
+        grad.addColorStop(1, '#e5e7eb');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, rect.width, rect.height);
+
+        ctx.fillStyle = 'rgba(79, 89, 104, 0.72)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `900 ${Math.max(18, Math.min(28, rect.width / 16))}px Arial, sans-serif`;
+        ctx.fillText('여기를 긁어주세요', rect.width / 2, rect.height / 2 - 10);
+        ctx.font = `700 ${Math.max(11, Math.min(15, rect.width / 28))}px Arial, sans-serif`;
+        ctx.fillText('SCRATCH HERE', rect.width / 2, rect.height / 2 + 20);
+
+        for (let i = 0; i < 80; i++) {
+          ctx.fillStyle = `rgba(255,255,255,${0.08 + Math.random() * 0.18})`;
+          ctx.beginPath();
+          ctx.arc(Math.random() * rect.width, Math.random() * rect.height, 1 + Math.random() * 2.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function getCanvasPoint(e) {
+        const rect = el.scratchCanvas.getBoundingClientRect();
+        return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      }
+
+      function scratchAt(point, previous) {
+        const canvas = el.scratchCanvas;
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.save();
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = Math.max(28, Math.min(58, rect.width * 0.095));
+
+        if (previous) {
+          ctx.beginPath();
+          ctx.moveTo(previous.x, previous.y);
+          ctx.lineTo(point.x, point.y);
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, ctx.lineWidth / 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+
+        scheduleScratchCheck();
+      }
+
+      function scheduleScratchCheck() {
+        clearTimeout(scratchCheckTimer);
+        scratchCheckTimer = setTimeout(checkScratchPercent, 90);
+      }
+
+      function checkScratchPercent() {
+        if (revealedEnough) return;
+        const canvas = el.scratchCanvas;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const width = canvas.width;
+        const height = canvas.height;
+        if (!width || !height) return;
+
+        const image = ctx.getImageData(0, 0, width, height).data;
+        const step = 20;
+        let transparent = 0;
+        let sampled = 0;
+        for (let y = 0; y < height; y += step) {
+          for (let x = 0; x < width; x += step) {
+            const alpha = image[(y * width + x) * 4 + 3];
+            sampled++;
+            if (alpha < 30) transparent++;
+          }
+        }
+        const percent = sampled ? Math.round((transparent / sampled) * 100) : 0;
+        el.scratchProgress.style.width = `${Math.min(100, percent)}%`;
+        el.progressValue.textContent = `${Math.min(100, percent)}%`;
+
+        if (percent >= 46) {
+          revealScratchResult();
+        } else if (percent >= 25) {
+          el.scratchHint.textContent = '좋아요! 조금만 더 긁어주세요.';
+        } else {
+          el.scratchHint.textContent = '조금 더 긁어주세요.';
+        }
+      }
+
+      function revealScratchResult() {
+        if (revealedEnough) return;
+        revealedEnough = true;
+        const canvas = el.scratchCanvas;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        el.scratchProgress.style.width = '100%';
+        el.progressValue.textContent = '100%';
+        el.scratchHint.textContent = '결과를 확인했습니다!';
+        el.doneScratch.disabled = false;
+      }
+
+      function markDone() {
+        if (activeIndex === null || !revealedEnough) return;
+        const coupon = state.coupons[activeIndex];
+        if (!coupon || coupon.used) return;
+        coupon.used = true;
+        saveState();
+        render();
+        el.scratchModal.classList.add('hidden');
+        activeIndex = null;
+        scratching = false;
+        lastPoint = null;
+        showToast('쿠폰 확인이 완료되었습니다.');
+      }
+
+      el.previewCoupons.addEventListener('click', openTeacherPreview);
+      el.closeTeacherPreview.addEventListener('click', closeTeacherPreview);
+      el.teacherPreviewDone.addEventListener('click', closeTeacherPreview);
+      el.openSettings.addEventListener('click', openSettings);
+      el.closeSettings.addEventListener('click', closeSettings);
+      el.cancelSettings.addEventListener('click', closeSettings);
+      el.saveSettings.addEventListener('click', saveSettings);
+      el.couponCountInput.addEventListener('input', updateSettingsPreview);
+      el.winCountInput.addEventListener('input', updateSettingsPreview);
+      el.addCoupon.addEventListener('click', addOneCoupon);
+      el.resetAll.addEventListener('click', resetAll);
+      el.closeScratch.addEventListener('click', closeScratch);
+      el.doneScratch.addEventListener('click', markDone);
+
+      el.teacherPreviewModal.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal-backdrop')) closeTeacherPreview();
+      });
+      el.settingsModal.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal-backdrop')) closeSettings();
+      });
+      el.scratchModal.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal-backdrop')) closeScratch();
+      });
+
+      el.scratchCanvas.addEventListener('pointerdown', (e) => {
+        if (revealedEnough) return;
+        e.preventDefault();
+        scratching = true;
+        el.scratchCanvas.setPointerCapture?.(e.pointerId);
+        const p = getCanvasPoint(e);
+        scratchAt(p, null);
+        lastPoint = p;
+      });
+
+      el.scratchCanvas.addEventListener('pointermove', (e) => {
+        if (!scratching || revealedEnough) return;
+        e.preventDefault();
+        const p = getCanvasPoint(e);
+        scratchAt(p, lastPoint);
+        lastPoint = p;
+      });
+
+      const endScratch = (e) => {
+        if (!scratching) return;
+        scratching = false;
+        lastPoint = null;
+        try { el.scratchCanvas.releasePointerCapture?.(e.pointerId); } catch (_) {}
+        scheduleScratchCheck();
+      };
+
+      el.scratchCanvas.addEventListener('pointerup', endScratch);
+      el.scratchCanvas.addEventListener('pointercancel', endScratch);
+      el.scratchCanvas.addEventListener('pointerleave', (e) => {
+        if (e.buttons === 0) endScratch(e);
+      });
+
+      window.addEventListener('resize', () => {
+        if (!el.scratchModal.classList.contains('hidden') && activeIndex !== null && !revealedEnough) {
+          setupScratchCanvas();
+          el.scratchProgress.style.width = '0%';
+          el.progressValue.textContent = '0%';
+          el.scratchHint.textContent = '화면 크기가 바뀌어 스크래치 영역을 다시 준비했습니다.';
+        }
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        if (!el.scratchModal.classList.contains('hidden')) closeScratch();
+        else if (!el.teacherPreviewModal.classList.contains('hidden')) closeTeacherPreview();
+        else if (!el.settingsModal.classList.contains('hidden')) closeSettings();
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
