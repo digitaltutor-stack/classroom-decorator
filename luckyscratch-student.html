@@ -1021,12 +1021,27 @@
 
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script>
     (() => {
       'use strict';
 
+      firebase.initializeApp({
+        apiKey: 'AIzaSyDrv4xG2PAknLP1cx3wthA4xJEjiKcFObE',
+        authDomain: 'school-steps-a0b18.firebaseapp.com',
+        databaseURL: 'https://school-steps-a0b18-default-rtdb.firebaseio.com',
+        projectId: 'school-steps-a0b18',
+        storageBucket: 'school-steps-a0b18.firebasestorage.app',
+        messagingSenderId: '703455419879',
+        appId: '1:703455419879:web:d81c736f0b46a1a5177142'
+      });
+      const cloudDb = firebase.database();
+      const CLOUD_ROOT = 'lucky_scratch_v1';
+
       const STORAGE_KEY = 'studentScratchCouponPool_v1';
       const PARTICIPATION_KEY = 'studentScratchCouponParticipation_v1';
+      const DEVICE_KEY = 'studentScratchCouponDevice_v1';
       const DEFAULTS = {
         title: '행운 스크래치 쿠폰',
         total: 20,
@@ -1083,6 +1098,10 @@
 
       let state = loadState();
       let participation = loadParticipation();
+      let claims = {};
+      let currentRoundId = null;
+      const deviceId = localStorage.getItem(DEVICE_KEY) || (crypto.randomUUID?.() || `${Date.now()}-${Math.random()}`);
+      localStorage.setItem(DEVICE_KEY, deviceId);
       let activeIndex = null;
       let scratching = false;
       let lastPoint = null;
@@ -1163,6 +1182,7 @@
           couponId: coupon.id,
           isWin: coupon.isWin,
           prize: coupon.prize || '',
+          roundId: currentRoundId,
           completedAt: new Date().toISOString()
         };
         localStorage.setItem(PARTICIPATION_KEY, JSON.stringify(participation));
@@ -1190,33 +1210,36 @@
           return;
         }
 
-        const used = state.coupons.filter(c => c.used).length;
+        const used = Object.keys(claims || {}).length;
         el.totalCount.textContent = state.coupons.length;
         el.remainingCount.textContent = `${state.coupons.length - used}개`;
         el.usedCount.textContent = `${used}개`;
 
         el.couponGrid.innerHTML = '';
         state.coupons.forEach((coupon, index) => {
+          const claim = claims?.[coupon.id];
+          const claimedByMe = claim?.deviceId === deviceId;
+          const unavailable = Boolean(claim) && !claimedByMe;
           const btn = document.createElement('button');
           btn.type = 'button';
-          btn.className = `coupon${coupon.used ? ' used' : ''}`;
-          btn.setAttribute('aria-label', `${coupon.id}번 스크래치 쿠폰${coupon.used ? ', 확인 완료' : ''}`);
+          btn.className = `coupon${unavailable ? ' used' : ''}`;
+          btn.setAttribute('aria-label', `${coupon.id}번 스크래치 쿠폰${unavailable ? ', 다른 학생이 선택함' : ''}`);
           btn.innerHTML = `
-            ${coupon.used ? '<span class="used-badge">확인 완료</span>' : ''}
+            ${unavailable ? '<span class="used-badge">선택 완료</span>' : ''}
             <span class="coupon-num">${coupon.id}</span>
             <span class="coupon-title">스크래치 쿠폰</span>
-            <span class="coupon-sub">${coupon.used ? '이미 확인한 쿠폰' : '터치하여 긁기'}</span>
+            <span class="coupon-sub">${unavailable ? '다른 학생이 선택했어요' : (claimedByMe ? '내가 선택한 쿠폰' : '터치하여 긁기')}</span>
           `;
-          btn.addEventListener('click', () => {
+          btn.addEventListener('click', async () => {
             if (participation) {
               showToast('이 기기에서는 이미 참여를 완료했습니다.');
               return;
             }
-            if (coupon.used) {
-              showToast('이미 확인한 쿠폰입니다.');
+            if (unavailable) {
+              showToast('다른 학생이 먼저 선택한 쿠폰입니다.');
               return;
             }
-            openScratch(index);
+            await claimAndOpen(index);
           });
           el.couponGrid.appendChild(btn);
         });
@@ -1366,6 +1389,28 @@
         showToast('전체 초기화가 완료되었습니다.');
       }
 
+      function claimAndOpen(index) {
+        const coupon = state.coupons[index];
+        if (!coupon) return Promise.resolve();
+        const ref = cloudDb.ref(`${CLOUD_ROOT}/claims/${coupon.id}`);
+        return new Promise(resolve => {
+          ref.transaction(current => {
+            if (current && current.deviceId !== deviceId) return;
+            return current || { deviceId, claimedAt: firebase.database.ServerValue.TIMESTAMP };
+          }, (error, committed, snapshot) => {
+            if (error || !committed || snapshot.val()?.deviceId !== deviceId) {
+              showToast('다른 학생이 먼저 선택한 쿠폰입니다. 다른 번호를 골라주세요.');
+              resolve();
+              return;
+            }
+            claims[coupon.id] = snapshot.val();
+            render();
+            openScratch(index);
+            resolve();
+          });
+        });
+      }
+
       function openScratch(index) {
         if (participation) {
           showToast('이 기기에서는 이미 참여를 완료했습니다.');
@@ -1373,7 +1418,7 @@
         }
         activeIndex = index;
         const coupon = state.coupons[index];
-        if (!coupon || coupon.used) return;
+        if (!coupon) return;
 
         el.scratchTitle.textContent = `${coupon.id}번 쿠폰`;
         if (coupon.isWin) {
@@ -1613,6 +1658,38 @@
         if (!el.scratchModal.classList.contains('hidden')) closeScratch();
         else if (!el.teacherPreviewModal.classList.contains('hidden')) closeTeacherPreview();
         else if (!el.settingsModal.classList.contains('hidden')) closeSettings();
+      });
+
+      cloudDb.ref(`${CLOUD_ROOT}/config`).on('value', snapshot => {
+        const config = snapshot.val();
+        if (!config || !Array.isArray(config.coupons)) return;
+        const nextRound = String(config.roundId || config.updatedAt || 'default');
+        if (currentRoundId !== nextRound) {
+          currentRoundId = nextRound;
+          if (participation && String(participation.roundId) !== nextRound) {
+            participation = null;
+            localStorage.removeItem(PARTICIPATION_KEY);
+          }
+        }
+        state = {
+          title: config.title || DEFAULTS.title,
+          total: config.total || config.coupons.length,
+          winCount: config.winCount || 0,
+          prizes: (config.prizeItems || []).map(item => item.name),
+          coupons: config.coupons.map((coupon, index) => ({
+            id: Number(coupon.id) || index + 1,
+            isWin: Boolean(coupon.isWin),
+            prize: coupon.prize || '',
+            used: false
+          }))
+        };
+        saveState();
+        render();
+      });
+
+      cloudDb.ref(`${CLOUD_ROOT}/claims`).on('value', snapshot => {
+        claims = snapshot.val() || {};
+        render();
       });
 
       render();

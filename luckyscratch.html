@@ -946,23 +946,18 @@
               <small>최대 40장까지 설정 가능</small>
             </label>
 
-            <label class="field">
-              <span>당첨 쿠폰 수</span>
-              <input id="winCountInput" type="number" min="0" max="20" value="5" />
-              <small id="loseCountText">꽝 15장</small>
-            </label>
-
             <div class="field">
               <span>당첨 비율 미리보기</span>
               <input id="ratePreviewInput" type="text" value="25%" disabled />
-              <small>당첨 수에 따라 자동 계산됩니다.</small>
+              <small id="loseCountText">상품별 수량의 합으로 자동 계산됩니다.</small>
             </div>
 
-            <label class="field full">
-              <span>당첨 상품</span>
-              <textarea id="prizeInput" rows="6" placeholder="한 줄에 상품 하나씩 입력하세요.&#10;예)&#10;간식&#10;하리보&#10;과자"></textarea>
-              <small>당첨 쿠폰에는 입력한 상품이 무작위로 배정됩니다.</small>
-            </label>
+            <div class="field full">
+              <span>상품별 당첨 수</span>
+              <div id="prizeRows"></div>
+              <button id="addPrizeRow" type="button" class="secondary-btn" style="margin-top:10px">＋ 상품 추가</button>
+              <small>예: 새콤달콤 6개, 하리보젤리 1개. 합계가 전체 쿠폰 수보다 클 수 없습니다.</small>
+            </div>
           </div>
         </div>
 
@@ -1000,16 +995,31 @@
 
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script>
     (() => {
       'use strict';
+
+      firebase.initializeApp({
+        apiKey: 'AIzaSyDrv4xG2PAknLP1cx3wthA4xJEjiKcFObE',
+        authDomain: 'school-steps-a0b18.firebaseapp.com',
+        databaseURL: 'https://school-steps-a0b18-default-rtdb.firebaseio.com',
+        projectId: 'school-steps-a0b18',
+        storageBucket: 'school-steps-a0b18.firebasestorage.app',
+        messagingSenderId: '703455419879',
+        appId: '1:703455419879:web:d81c736f0b46a1a5177142'
+      });
+      const cloudDb = firebase.database();
+      const CLOUD_ROOT = 'lucky_scratch_v1';
 
       const STORAGE_KEY = 'teacherScratchCouponWidget_v3';
       const DEFAULTS = {
         title: '행운 스크래치 쿠폰',
         total: 20,
-        winCount: 5,
-        prizes: ['간식', '하리보', '과자'],
+        winCount: 7,
+        prizeItems: [{ name: '새콤달콤', count: 6 }, { name: '하리보젤리', count: 1 }],
+        prizes: ['새콤달콤', '하리보젤리'],
         coupons: []
       };
 
@@ -1036,9 +1046,9 @@
         cancelSettings: $('cancelSettings'),
         saveSettings: $('saveSettings'),
         couponCountInput: $('couponCountInput'),
-        winCountInput: $('winCountInput'),
+        prizeRows: $('prizeRows'),
+        addPrizeRow: $('addPrizeRow'),
         loseCountText: $('loseCountText'),
-        prizeInput: $('prizeInput'),
         titleInput: $('titleInput'),
         ratePreviewInput: $('ratePreviewInput'),
         previewWins: $('previewWins'),
@@ -1079,15 +1089,15 @@
         return a;
       }
 
-      function generateCoupons(total, winCount, prizes) {
+      function generateCoupons(total, prizeItems) {
         const safeTotal = clamp(Number(total) || 20, 1, 40);
-        const safeWins = clamp(Number(winCount) || 0, 0, safeTotal);
-        const prizeList = prizes.length ? prizes : ['행운의 선물'];
+        const items = Array.isArray(prizeItems) ? prizeItems : [];
         const results = [];
 
-        for (let i = 0; i < safeWins; i++) {
-          results.push({ isWin: true, prize: prizeList[i % prizeList.length] });
-        }
+        items.forEach(item => {
+          const count = clamp(Number(item.count) || 0, 0, safeTotal - results.length);
+          for (let i = 0; i < count; i++) results.push({ isWin: true, prize: item.name || '행운의 선물' });
+        });
         while (results.length < safeTotal) {
           results.push({ isWin: false, prize: '' });
         }
@@ -1108,6 +1118,9 @@
               parsed.total = clamp(Number(parsed.total) || parsed.coupons.length, 1, 40);
               parsed.winCount = clamp(Number(parsed.winCount) || 0, 0, parsed.total);
               parsed.prizes = Array.isArray(parsed.prizes) && parsed.prizes.length ? parsed.prizes : [...DEFAULTS.prizes];
+              parsed.prizeItems = Array.isArray(parsed.prizeItems) && parsed.prizeItems.length
+                ? parsed.prizeItems
+                : parsed.prizes.map((name, index) => ({ name, count: index < parsed.winCount ? 1 : 0 }));
               parsed.title = parsed.title || DEFAULTS.title;
               return parsed;
             }
@@ -1118,7 +1131,8 @@
 
         const fresh = { ...DEFAULTS };
         fresh.prizes = [...DEFAULTS.prizes];
-        fresh.coupons = generateCoupons(fresh.total, fresh.winCount, fresh.prizes);
+        fresh.prizeItems = DEFAULTS.prizeItems.map(item => ({ ...item }));
+        fresh.coupons = generateCoupons(fresh.total, fresh.prizeItems);
         return fresh;
       }
 
@@ -1170,9 +1184,10 @@
       }
 
       function resetResultsKeepingSettings() {
-        state.coupons = generateCoupons(state.total, state.winCount, state.prizes);
+        state.coupons = generateCoupons(state.total, state.prizeItems);
         saveState();
         render();
+        publishState();
       }
 
       function confirmRebuild(message) {
@@ -1219,8 +1234,7 @@
 
       function openSettings() {
         el.couponCountInput.value = state.total;
-        el.winCountInput.value = state.winCount;
-        el.prizeInput.value = state.prizes.join('\n');
+        renderPrizeRows(state.prizeItems || DEFAULTS.prizeItems);
         el.titleInput.value = state.title;
         updateSettingsPreview();
         el.settingsModal.classList.remove('hidden');
@@ -1230,18 +1244,37 @@
         el.settingsModal.classList.add('hidden');
       }
 
+      function renderPrizeRows(items) {
+        el.prizeRows.innerHTML = '';
+        (items.length ? items : [{ name: '', count: 1 }]).forEach(item => {
+          const row = document.createElement('div');
+          row.className = 'prize-row';
+          row.style.cssText = 'display:grid;grid-template-columns:1fr 110px 44px;gap:8px;margin-bottom:8px';
+          row.innerHTML = `
+            <input class="prize-name" type="text" maxlength="30" placeholder="상품 이름" value="${escapeHtml(item.name || '')}">
+            <input class="prize-count" type="number" min="0" max="40" value="${clamp(Number(item.count) || 0, 0, 40)}" aria-label="당첨 수">
+            <button type="button" class="soft-btn remove-prize" aria-label="상품 삭제" style="padding:0">×</button>`;
+          row.querySelectorAll('input').forEach(input => input.addEventListener('input', updateSettingsPreview));
+          row.querySelector('.remove-prize').addEventListener('click', () => { row.remove(); updateSettingsPreview(); });
+          el.prizeRows.appendChild(row);
+        });
+      }
+
+      function readPrizeItems() {
+        return [...el.prizeRows.querySelectorAll('.prize-row')]
+          .map(row => ({
+            name: row.querySelector('.prize-name').value.trim(),
+            count: clamp(parseInt(row.querySelector('.prize-count').value, 10) || 0, 0, 40)
+          }))
+          .filter(item => item.name && item.count > 0);
+      }
+
       function updateSettingsPreview() {
         const total = clamp(parseInt(el.couponCountInput.value, 10) || 1, 1, 40);
-        let wins = parseInt(el.winCountInput.value, 10);
-        if (Number.isNaN(wins)) wins = 0;
-        wins = clamp(wins, 0, total);
-        el.winCountInput.max = total;
-        if (document.activeElement !== el.winCountInput) {
-          el.winCountInput.value = wins;
-        }
+        const wins = readPrizeItems().reduce((sum, item) => sum + item.count, 0);
         const loses = total - wins;
         const rate = total ? Math.round((wins / total) * 100) : 0;
-        el.loseCountText.textContent = `꽝 ${loses}장`;
+        el.loseCountText.textContent = wins > total ? `당첨 수가 ${wins - total}장 초과했습니다.` : `당첨 ${wins}장 · 꽝 ${loses}장`;
         el.previewWins.textContent = `${wins}장`;
         el.previewLoses.textContent = `${loses}장`;
         el.previewRate.textContent = `${rate}%`;
@@ -1250,19 +1283,18 @@
 
       function saveSettings() {
         const total = clamp(parseInt(el.couponCountInput.value, 10) || 20, 1, 40);
-        let wins = parseInt(el.winCountInput.value, 10);
-        if (Number.isNaN(wins)) wins = 0;
-        wins = clamp(wins, 0, total);
-        const prizes = el.prizeInput.value.split('\n').map(v => v.trim()).filter(Boolean);
+        const prizeItems = readPrizeItems();
+        const wins = prizeItems.reduce((sum, item) => sum + item.count, 0);
+        const prizes = prizeItems.map(item => item.name);
         const title = el.titleInput.value.trim() || DEFAULTS.title;
 
-        if (wins > 0 && prizes.length === 0) {
-          window.alert('당첨 쿠폰이 있다면 상품을 한 개 이상 입력해주세요.');
+        if (wins > total) {
+          window.alert(`상품별 당첨 수의 합계(${wins}개)가 전체 쿠폰 수(${total}개)보다 많습니다.`);
           return;
         }
 
         const changed = total !== state.total || wins !== state.winCount ||
-          title !== state.title || JSON.stringify(prizes) !== JSON.stringify(state.prizes);
+          title !== state.title || JSON.stringify(prizeItems) !== JSON.stringify(state.prizeItems);
 
         if (changed && !confirmRebuild('설정을 변경하면 현재 쿠폰의 사용 기록과 결과가 모두 새로 섞입니다. 계속할까요?')) {
           return;
@@ -1271,9 +1303,11 @@
         state.total = total;
         state.winCount = wins;
         state.prizes = prizes.length ? prizes : [...DEFAULTS.prizes];
+        state.prizeItems = prizeItems;
         state.title = title;
-        state.coupons = generateCoupons(total, wins, state.prizes);
+        state.coupons = generateCoupons(total, prizeItems);
         saveState();
+        publishState();
         render();
         closeSettings();
         showToast('설정을 저장하고 쿠폰을 새로 섞었습니다.');
@@ -1287,12 +1321,30 @@
         if (!confirmRebuild('쿠폰 수를 늘리면 모든 쿠폰의 결과가 다시 섞입니다. 계속할까요?')) return;
 
         state.total += 1;
-        const rate = state.coupons.length ? state.winCount / state.coupons.length : 0;
-        state.winCount = clamp(Math.round(state.total * rate), 0, state.total);
-        state.coupons = generateCoupons(state.total, state.winCount, state.prizes);
+        state.winCount = (state.prizeItems || []).reduce((sum, item) => sum + Number(item.count || 0), 0);
+        state.coupons = generateCoupons(state.total, state.prizeItems);
         saveState();
+        publishState();
         render();
         showToast(`${state.total}장으로 늘리고 새로 섞었습니다.`);
+      }
+
+      function publishState() {
+        cloudDb.ref(CLOUD_ROOT).set({
+          config: {
+            title: state.title,
+            total: state.total,
+            winCount: state.winCount,
+            prizeItems: state.prizeItems,
+            coupons: state.coupons.map(({ id, isWin, prize }) => ({ id, isWin, prize: prize || '' })),
+            roundId: Date.now(),
+            updatedAt: firebase.database.ServerValue.TIMESTAMP
+          },
+          claims: null
+        }).catch(err => {
+          console.error(err);
+          showToast('온라인 설정 저장에 실패했습니다. 다시 시도해주세요.');
+        });
       }
 
       function resetAll() {
@@ -1479,7 +1531,12 @@
       el.cancelSettings.addEventListener('click', closeSettings);
       el.saveSettings.addEventListener('click', saveSettings);
       el.couponCountInput.addEventListener('input', updateSettingsPreview);
-      el.winCountInput.addEventListener('input', updateSettingsPreview);
+      el.addPrizeRow.addEventListener('click', () => {
+        const items = readPrizeItems();
+        items.push({ name: '', count: 1 });
+        renderPrizeRows(items);
+        updateSettingsPreview();
+      });
       el.addCoupon.addEventListener('click', addOneCoupon);
       el.resetAll.addEventListener('click', resetAll);
       el.closeScratch.addEventListener('click', closeScratch);
