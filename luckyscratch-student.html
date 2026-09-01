@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#5b57f5" />
-  <title>행운 스크래치 쿠폰</title>
+  <title>학생용 행운 스크래치 쿠폰</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%235b57f5'/%3E%3Ctext x='32' y='43' font-size='34' text-anchor='middle'%3E%F0%9F%8E%9F%EF%B8%8F%3C/text%3E%3C/svg%3E" />
   <style>
     :root {
@@ -118,6 +118,27 @@
       background: rgba(255,255,255,0.28);
     }
     .topbar-actions { display: flex; align-items: center; gap: 10px; }
+    .student-mode-badge {
+      padding: 12px 16px;
+      border-radius: 14px;
+      color: white;
+      background: rgba(255,255,255,0.18);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18);
+      font-weight: 800;
+    }
+    .teacher-only, #teacherPreviewModal, #settingsModal { display: none !important; }
+    .participation-complete {
+      grid-column: 1 / -1;
+      padding: 36px 24px;
+      border: 2px solid #c7d2fe;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #eef2ff, #ffffff);
+      text-align: center;
+      box-shadow: var(--shadow-soft);
+    }
+    .participation-complete .complete-emoji { font-size: 54px; }
+    .participation-complete h2 { margin: 10px 0 8px; font-size: 28px; }
+    .participation-complete .complete-result { margin-top: 14px; font-size: 22px; font-weight: 900; color: var(--primary-deep); }
 
     .container {
       max-width: 1160px;
@@ -813,13 +834,13 @@
       <div class="brand">
         <div class="brand-icon">🎁</div>
         <div>
-          <div class="title">행운 스크래치 쿠폰</div>
-          <div class="subtitle">원하는 쿠폰을 골라 손가락이나 마우스로 긁어보세요!</div>
+          <div class="title">학생용 행운 스크래치 쿠폰</div>
+          <div class="subtitle">한 기기에서 쿠폰 하나만 선택할 수 있어요.</div>
         </div>
       </div>
       <div class="topbar-actions">
-        <a class="student-link" href="luckyscratch-student.html">🎓 학생용 페이지 열기</a>
-        <button id="openSettings" class="icon-btn" aria-label="설정">⚙️</button>
+        <div class="student-mode-badge">🎓 기기당 1회</div>
+        <button id="openSettings" class="icon-btn teacher-only" aria-label="설정">⚙️</button>
       </div>
     </div>
   </header>
@@ -846,7 +867,7 @@
         </div>
       </div>
 
-      <div class="summary-actions">
+      <div class="summary-actions teacher-only">
         <button id="previewCoupons" class="secondary-btn">👁 쿠폰 위치 확인</button>
         <button id="addCoupon" class="secondary-btn">＋ 쿠폰 추가</button>
         <button id="resetAll" class="soft-btn">↻ 전체 초기화</button>
@@ -855,13 +876,13 @@
 
     <section class="notice">
       <span class="notice-icon">i</span>
-      <span>원하는 쿠폰을 선택한 뒤, 크게 열린 쿠폰의 은색 영역을 손가락이나 마우스로 긁어 결과를 확인하세요. 사용이 끝난 쿠폰은 자동으로 ‘확인 완료’ 상태로 바뀝니다.</span>
+      <span>원하는 쿠폰 하나를 신중하게 선택하세요. 결과가 보이면 이 기기에서는 다른 쿠폰을 다시 긁을 수 없습니다.</span>
     </section>
 
     <section class="grid-head">
       <div>
         <div class="section-title">스크래치 쿠폰</div>
-        <div class="section-sub">기본 20장, 최대 40장까지 확장 가능</div>
+        <div class="section-sub">이 기기에서는 한 번만 참여할 수 있어요</div>
       </div>
     </section>
 
@@ -1004,7 +1025,8 @@
     (() => {
       'use strict';
 
-      const STORAGE_KEY = 'teacherScratchCouponWidget_v3';
+      const STORAGE_KEY = 'studentScratchCouponPool_v1';
+      const PARTICIPATION_KEY = 'studentScratchCouponParticipation_v1';
       const DEFAULTS = {
         title: '행운 스크래치 쿠폰',
         total: 20,
@@ -1060,6 +1082,7 @@
       };
 
       let state = loadState();
+      let participation = loadParticipation();
       let activeIndex = null;
       let scratching = false;
       let lastPoint = null;
@@ -1126,9 +1149,46 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       }
 
+      function loadParticipation() {
+        try {
+          const raw = localStorage.getItem(PARTICIPATION_KEY);
+          return raw ? JSON.parse(raw) : null;
+        } catch (_) {
+          return null;
+        }
+      }
+
+      function saveParticipation(coupon) {
+        participation = {
+          couponId: coupon.id,
+          isWin: coupon.isWin,
+          prize: coupon.prize || '',
+          completedAt: new Date().toISOString()
+        };
+        localStorage.setItem(PARTICIPATION_KEY, JSON.stringify(participation));
+      }
+
       function render() {
-        document.querySelector('.title').textContent = state.title;
-        document.title = state.title;
+        document.querySelector('.title').textContent = '학생용 행운 스크래치 쿠폰';
+        document.title = '학생용 행운 스크래치 쿠폰';
+
+        if (participation) {
+          el.totalCount.textContent = state.coupons.length;
+          el.remainingCount.textContent = '참여 완료';
+          el.usedCount.textContent = '1개';
+          const resultText = participation.isWin
+            ? `당첨 — ${escapeHtml(participation.prize || '행운의 선물')}`
+            : '아쉽지만 꽝 — 다음 행운을 기대해요';
+          el.couponGrid.innerHTML = `
+            <div class="participation-complete" role="status">
+              <div class="complete-emoji">${participation.isWin ? '🎉' : '🍀'}</div>
+              <h2>이미 참여를 완료했어요</h2>
+              <p>이 기기에서는 쿠폰을 한 번만 긁을 수 있습니다.</p>
+              <div class="complete-result">${resultText}</div>
+            </div>
+          `;
+          return;
+        }
 
         const used = state.coupons.filter(c => c.used).length;
         el.totalCount.textContent = state.coupons.length;
@@ -1148,6 +1208,10 @@
             <span class="coupon-sub">${coupon.used ? '이미 확인한 쿠폰' : '터치하여 긁기'}</span>
           `;
           btn.addEventListener('click', () => {
+            if (participation) {
+              showToast('이 기기에서는 이미 참여를 완료했습니다.');
+              return;
+            }
             if (coupon.used) {
               showToast('이미 확인한 쿠폰입니다.');
               return;
@@ -1303,6 +1367,10 @@
       }
 
       function openScratch(index) {
+        if (participation) {
+          showToast('이 기기에서는 이미 참여를 완료했습니다.');
+          return;
+        }
         activeIndex = index;
         const coupon = state.coupons[index];
         if (!coupon || coupon.used) return;
@@ -1455,14 +1523,18 @@
         el.progressValue.textContent = '100%';
         el.scratchHint.textContent = '결과를 확인했습니다!';
         el.doneScratch.disabled = false;
+        const coupon = activeIndex === null ? null : state.coupons[activeIndex];
+        if (coupon && !participation) {
+          coupon.used = true;
+          saveState();
+          saveParticipation(coupon);
+        }
       }
 
       function markDone() {
         if (activeIndex === null || !revealedEnough) return;
         const coupon = state.coupons[activeIndex];
-        if (!coupon || coupon.used) return;
-        coupon.used = true;
-        saveState();
+        if (!coupon) return;
         render();
         el.scratchModal.classList.add('hidden');
         activeIndex = null;
