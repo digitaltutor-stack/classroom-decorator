@@ -1333,19 +1333,22 @@
       }
 
       function publishState() {
-        cloudDb.ref(CLOUD_ROOT).set({
-          config: {
-            title: state.title,
-            total: state.total,
-            winCount: state.winCount,
-            prizeItems: state.prizeItems,
-            coupons: state.coupons.map(({ id, isWin, prize }) => ({ id, isWin, prize: prize || '' })),
-            roundId: Date.now(),
-            updatedAt: firebase.database.ServerValue.TIMESTAMP
-          },
-          claims: null,
-          deviceClaims: null
-        }).catch(err => {
+        const config = {
+          title: state.title,
+          total: state.total,
+          winCount: state.winCount,
+          prizeItems: state.prizeItems,
+          coupons: state.coupons.map(({ id, isWin, prize }) => ({ id, isWin, prize: prize || '' })),
+          roundId: Date.now(),
+          updatedAt: firebase.database.ServerValue.TIMESTAMP
+        };
+
+        cloudDb.ref(`${CLOUD_ROOT}/config`).set(config)
+          .then(() => Promise.all([
+            cloudDb.ref(`${CLOUD_ROOT}/claims`).remove(),
+            cloudDb.ref(`${CLOUD_ROOT}/deviceClaims`).remove()
+          ]))
+          .catch(err => {
           console.error(err);
           showToast('온라인 설정 저장에 실패했습니다. 다시 시도해주세요.');
         });
