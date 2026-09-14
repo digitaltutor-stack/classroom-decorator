@@ -1399,49 +1399,66 @@
       function claimAndOpen(index) {
         const coupon = state.coupons[index];
         if (!coupon) return Promise.resolve();
-        const ref = cloudDb.ref(CLOUD_ROOT);
+        const existingLocal = Object.entries(claims || {}).find(([, claim]) => claim?.deviceId === deviceId);
+        if (existingLocal && Number(existingLocal[0]) !== Number(coupon.id)) {
+          showToast(`이미 ${existingLocal[0]}번 쿠폰을 선택했습니다.`);
+          return Promise.resolve();
+        }
+
+        const deviceRef = cloudDb.ref(`${CLOUD_ROOT}/deviceClaims/${deviceId}`);
+        const couponRef = cloudDb.ref(`${CLOUD_ROOT}/claims/${coupon.id}`);
         return new Promise(resolve => {
-          ref.transaction(root => {
-            if (!root || !root.config) return;
-            root.claims = root.claims || {};
-            root.deviceClaims = root.deviceClaims || {};
-
-            let existingId = root.deviceClaims[deviceId]?.couponId;
-            if (!existingId) {
-              const existing = Object.entries(root.claims).find(([, claim]) => claim?.deviceId === deviceId);
-              existingId = existing ? Number(existing[0]) : null;
-            }
-            if (existingId && Number(existingId) !== Number(coupon.id)) {
-              root.deviceClaims[deviceId] = { couponId: Number(existingId), status: root.claims[existingId]?.status || 'selected' };
-              return root;
-            }
-
-            const currentClaim = root.claims[coupon.id];
-            if (currentClaim && currentClaim.deviceId !== deviceId) return;
-            root.claims[coupon.id] = currentClaim || {
-              deviceId,
-              status: 'selected',
-              claimedAt: firebase.database.ServerValue.TIMESTAMP
-            };
-            root.deviceClaims[deviceId] = { couponId: coupon.id, status: root.claims[coupon.id].status || 'selected' };
-            return root;
-          }, (error, committed, snapshot) => {
-            const root = snapshot.val() || {};
-            const ownedId = Number(root.deviceClaims?.[deviceId]?.couponId || 0);
-            if (error || !committed || ownedId !== Number(coupon.id) || root.claims?.[coupon.id]?.deviceId !== deviceId) {
-              if (ownedId && ownedId !== Number(coupon.id)) {
-                showToast(`이미 ${ownedId}번 쿠폰을 선택했습니다.`);
-              } else {
-                showToast('다른 학생이 먼저 선택한 쿠폰입니다. 다른 번호를 골라주세요.');
-              }
+          deviceRef.transaction(current => current || {
+            couponId: coupon.id,
+            status: 'selected',
+            roundId: currentRoundId,
+            claimedAt: firebase.database.ServerValue.TIMESTAMP
+          }, (deviceError, deviceCommitted, deviceSnapshot) => {
+            if (deviceError) {
+              console.error(deviceError);
+              showToast('온라인 연결에 실패했습니다. 잠시 후 다시 눌러주세요.');
               resolve();
               return;
             }
-            claims = root.claims || {};
-            render();
-            openScratch(index);
-            resolve();
+            const ownedId = Number(deviceSnapshot.val()?.couponId || 0);
+            if (!deviceCommitted || ownedId !== Number(coupon.id)) {
+              showToast(`이미 ${ownedId || '다른'}번 쿠폰을 선택했습니다.`);
+              resolve();
+              return;
+            }
+
+            couponRef.transaction(current => current || {
+              deviceId,
+              status: 'selected',
+              claimedAt: firebase.database.ServerValue.TIMESTAMP
+            }, (couponError, couponCommitted, couponSnapshot) => {
+              const claim = couponSnapshot.val();
+              if (couponError) {
+                console.error(couponError);
+                releaseDeviceChoice(deviceRef, coupon.id);
+                showToast('온라인 연결에 실패했습니다. 잠시 후 다시 눌러주세요.');
+                resolve();
+                return;
+              }
+              if (!couponCommitted || claim?.deviceId !== deviceId) {
+                releaseDeviceChoice(deviceRef, coupon.id);
+                showToast('다른 학생이 먼저 선택한 쿠폰입니다. 다른 번호를 골라주세요.');
+                resolve();
+                return;
+              }
+              claims[coupon.id] = claim;
+              render();
+              openScratch(index);
+              resolve();
+            });
           });
+        });
+      }
+
+      function releaseDeviceChoice(deviceRef, couponId) {
+        deviceRef.transaction(current => {
+          if (Number(current?.couponId) === Number(couponId) && current?.status !== 'completed') return null;
+          return current;
         });
       }
 
