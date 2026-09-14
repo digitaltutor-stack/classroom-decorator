@@ -841,7 +841,7 @@
         </div>
         <div class="divider"></div>
         <div class="stat">
-          <span class="small-label">확인 완료</span>
+            <span class="small-label">선택 / 완료</span>
           <strong class="danger" id="usedCount">0개</strong>
         </div>
       </div>
@@ -1146,21 +1146,23 @@
         document.title = state.title;
 
         const used = state.coupons.filter(c => c.used).length;
+        const completed = state.coupons.filter(c => c.claimStatus === 'completed').length;
         el.totalCount.textContent = state.coupons.length;
         el.remainingCount.textContent = `${state.coupons.length - used}개`;
-        el.usedCount.textContent = `${used}개`;
+        el.usedCount.textContent = `${used} / ${completed}개`;
 
         el.couponGrid.innerHTML = '';
         state.coupons.forEach((coupon, index) => {
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className = `coupon${coupon.used ? ' used' : ''}`;
-          btn.setAttribute('aria-label', `${coupon.id}번 스크래치 쿠폰${coupon.used ? ', 학생 선택 완료' : ''}`);
+          const statusLabel = coupon.claimStatus === 'completed' ? '긁기 완료' : '선택 중';
+          btn.setAttribute('aria-label', `${coupon.id}번 스크래치 쿠폰${coupon.used ? `, ${statusLabel}` : ''}`);
           btn.innerHTML = `
-            ${coupon.used ? '<span class="used-badge">학생 선택</span>' : ''}
+            ${coupon.used ? `<span class="used-badge">${statusLabel}</span>` : ''}
             <span class="coupon-num">${coupon.id}</span>
             <span class="coupon-title">스크래치 쿠폰</span>
-            <span class="coupon-sub">${coupon.used ? '학생이 선택한 쿠폰' : '아직 선택되지 않음'}</span>
+            <span class="coupon-sub">${coupon.used ? (coupon.claimStatus === 'completed' ? '학생이 결과를 확인했어요' : '학생이 긁는 중이에요') : '아직 선택되지 않음'}</span>
           `;
           btn.addEventListener('click', () => {
             if (coupon.used) {
@@ -1341,7 +1343,8 @@
             roundId: Date.now(),
             updatedAt: firebase.database.ServerValue.TIMESTAMP
           },
-          claims: null
+          claims: null,
+          deviceClaims: null
         }).catch(err => {
           console.error(err);
           showToast('온라인 설정 저장에 실패했습니다. 다시 시도해주세요.');
@@ -1604,7 +1607,9 @@
       cloudDb.ref(`${CLOUD_ROOT}/claims`).on('value', snapshot => {
         liveClaims = snapshot.val() || {};
         state.coupons.forEach(coupon => {
-          coupon.used = Boolean(liveClaims[coupon.id]);
+          const claim = liveClaims[coupon.id];
+          coupon.used = Boolean(claim);
+          coupon.claimStatus = claim?.status || (claim ? 'selected' : null);
         });
         saveState();
         render();

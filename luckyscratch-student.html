@@ -1216,19 +1216,22 @@
         el.usedCount.textContent = `${used}개`;
 
         el.couponGrid.innerHTML = '';
+        const myClaimEntry = Object.entries(claims || {}).find(([, value]) => value?.deviceId === deviceId);
+        const myClaimedId = myClaimEntry ? Number(myClaimEntry[0]) : null;
         state.coupons.forEach((coupon, index) => {
           const claim = claims?.[coupon.id];
           const claimedByMe = claim?.deviceId === deviceId;
           const unavailable = Boolean(claim) && !claimedByMe;
+          const blockedByOwnChoice = myClaimedId !== null && !claimedByMe;
           const btn = document.createElement('button');
           btn.type = 'button';
-          btn.className = `coupon${unavailable ? ' used' : ''}`;
-          btn.setAttribute('aria-label', `${coupon.id}번 스크래치 쿠폰${unavailable ? ', 다른 학생이 선택함' : ''}`);
+          btn.className = `coupon${(unavailable || blockedByOwnChoice) ? ' used' : ''}`;
+          btn.setAttribute('aria-label', `${coupon.id}번 스크래치 쿠폰${unavailable ? ', 다른 학생이 선택함' : (blockedByOwnChoice ? ', 이미 다른 쿠폰을 선택함' : '')}`);
           btn.innerHTML = `
-            ${unavailable ? '<span class="used-badge">선택 완료</span>' : ''}
+            ${unavailable ? '<span class="used-badge">선택 완료</span>' : (blockedByOwnChoice ? '<span class="used-badge">선택 불가</span>' : '')}
             <span class="coupon-num">${coupon.id}</span>
             <span class="coupon-title">스크래치 쿠폰</span>
-            <span class="coupon-sub">${unavailable ? '다른 학생이 선택했어요' : (claimedByMe ? '내가 선택한 쿠폰' : '터치하여 긁기')}</span>
+            <span class="coupon-sub">${unavailable ? '다른 학생이 선택했어요' : (claimedByMe ? '내가 선택한 쿠폰 · 계속 긁기' : (blockedByOwnChoice ? `${myClaimedId}번만 참여할 수 있어요` : '터치하여 긁기'))}</span>
           `;
           btn.addEventListener('click', async () => {
             if (participation) {
@@ -1237,6 +1240,10 @@
             }
             if (unavailable) {
               showToast('다른 학생이 먼저 선택한 쿠폰입니다.');
+              return;
+            }
+            if (blockedByOwnChoice) {
+              showToast(`이미 ${myClaimedId}번 쿠폰을 선택했습니다.`);
               return;
             }
             await claimAndOpen(index);
@@ -1392,18 +1399,45 @@
       function claimAndOpen(index) {
         const coupon = state.coupons[index];
         if (!coupon) return Promise.resolve();
-        const ref = cloudDb.ref(`${CLOUD_ROOT}/claims/${coupon.id}`);
+        const ref = cloudDb.ref(CLOUD_ROOT);
         return new Promise(resolve => {
-          ref.transaction(current => {
-            if (current && current.deviceId !== deviceId) return;
-            return current || { deviceId, claimedAt: firebase.database.ServerValue.TIMESTAMP };
+          ref.transaction(root => {
+            if (!root || !root.config) return;
+            root.claims = root.claims || {};
+            root.deviceClaims = root.deviceClaims || {};
+
+            let existingId = root.deviceClaims[deviceId]?.couponId;
+            if (!existingId) {
+              const existing = Object.entries(root.claims).find(([, claim]) => claim?.deviceId === deviceId);
+              existingId = existing ? Number(existing[0]) : null;
+            }
+            if (existingId && Number(existingId) !== Number(coupon.id)) {
+              root.deviceClaims[deviceId] = { couponId: Number(existingId), status: root.claims[existingId]?.status || 'selected' };
+              return root;
+            }
+
+            const currentClaim = root.claims[coupon.id];
+            if (currentClaim && currentClaim.deviceId !== deviceId) return;
+            root.claims[coupon.id] = currentClaim || {
+              deviceId,
+              status: 'selected',
+              claimedAt: firebase.database.ServerValue.TIMESTAMP
+            };
+            root.deviceClaims[deviceId] = { couponId: coupon.id, status: root.claims[coupon.id].status || 'selected' };
+            return root;
           }, (error, committed, snapshot) => {
-            if (error || !committed || snapshot.val()?.deviceId !== deviceId) {
-              showToast('다른 학생이 먼저 선택한 쿠폰입니다. 다른 번호를 골라주세요.');
+            const root = snapshot.val() || {};
+            const ownedId = Number(root.deviceClaims?.[deviceId]?.couponId || 0);
+            if (error || !committed || ownedId !== Number(coupon.id) || root.claims?.[coupon.id]?.deviceId !== deviceId) {
+              if (ownedId && ownedId !== Number(coupon.id)) {
+                showToast(`이미 ${ownedId}번 쿠폰을 선택했습니다.`);
+              } else {
+                showToast('다른 학생이 먼저 선택한 쿠폰입니다. 다른 번호를 골라주세요.');
+              }
               resolve();
               return;
             }
-            claims[coupon.id] = snapshot.val();
+            claims = root.claims || {};
             render();
             openScratch(index);
             resolve();
@@ -1573,6 +1607,11 @@
           coupon.used = true;
           saveState();
           saveParticipation(coupon);
+          const updates = {};
+          updates[`${CLOUD_ROOT}/claims/${coupon.id}/status`] = 'completed';
+          updates[`${CLOUD_ROOT}/claims/${coupon.id}/completedAt`] = firebase.database.ServerValue.TIMESTAMP;
+          updates[`${CLOUD_ROOT}/deviceClaims/${deviceId}/status`] = 'completed';
+          cloudDb.ref().update(updates).catch(error => console.error(error));
         }
       }
 
