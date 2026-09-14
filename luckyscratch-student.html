@@ -1231,7 +1231,7 @@
             ${unavailable ? '<span class="used-badge">선택 완료</span>' : (blockedByOwnChoice ? '<span class="used-badge">선택 불가</span>' : '')}
             <span class="coupon-num">${coupon.id}</span>
             <span class="coupon-title">스크래치 쿠폰</span>
-            <span class="coupon-sub">${unavailable ? '다른 학생이 선택했어요' : (claimedByMe ? '내가 선택한 쿠폰 · 계속 긁기' : (blockedByOwnChoice ? `${myClaimedId}번만 참여할 수 있어요` : '터치하여 긁기'))}</span>
+            <span class="coupon-sub">${unavailable ? '다른 학생이 선택했어요' : (claimedByMe ? '내가 선택한 쿠폰 · 계속 긁기' : (blockedByOwnChoice ? `이미 ${myClaimedId}번 쿠폰을 선택했어요` : '터치하여 긁기'))}</span>
           `;
           btn.addEventListener('click', async () => {
             if (participation) {
