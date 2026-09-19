@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>가위바위보 AI</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: #0d0d1a;
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+
+  h1 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    text-align: center;
+  }
+
+  .sub {
+    font-size: 13px;
+    color: #8892a4;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  /* 대기 화면 */
+  #waiting {
+    text-align: center;
+  }
+
+  .waiting-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.08); opacity: 0.7; }
+  }
+
+  .waiting-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .waiting-sub {
+    font-size: 14px;
+    color: #8892a4;
+    line-height: 1.6;
+  }
+
+  /* 메인 화면 */
+  #main { display: none; width: 100%; max-width: 480px; }
+
+  .webcam-wrap {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #111;
+    margin-bottom: 16px;
+    aspect-ratio: 4/3;
+  }
+
+  #webcam {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transform: scaleX(-1);
+  }
+
+  /* 결과 오버레이 */
+  .result-overlay {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.85));
+    padding: 20px 20px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .result-emoji {
+    font-size: 52px;
+    line-height: 1;
+    transition: all 0.2s;
+  }
+
+  .result-info { flex: 1; }
+
+  .result-label {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.2;
+    transition: all 0.2s;
+  }
+
+  .result-conf {
+    font-size: 13px;
+    color: #a0b0c0;
+    margin-top: 2px;
+  }
+
+  /* 확률 바 */
+  .bars {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .bar-emoji { font-size: 18px; width: 28px; text-align: center; }
+
+  .bar-label {
+    font-size: 13px;
+    font-weight: 600;
+    width: 52px;
+    color: #c0d0e0;
+  }
+
+  .bar-bg {
+    flex: 1;
+    height: 12px;
+    background: #1a2a3a;
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.15s ease;
+    min-width: 0;
+  }
+
+  .bar-fill.scissor { background: #f59e0b; }
+  .bar-fill.rock    { background: #6366f1; }
+  .bar-fill.paper   { background: #10b981; }
+  .bar-fill.none    { background: #64748b; }
+
+  .bar-pct {
+    font-size: 12px;
+    font-weight: 700;
+    width: 36px;
+    text-align: right;
+    color: #e0e8f0;
+  }
+
+  /* 상태 메시지 */
+  #loadingMsg {
+    text-align: center;
+    padding: 40px 20px;
+    display: none;
+  }
+
+  .spinner {
+    font-size: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .load-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: #a0b0c0;
+  }
+
+  /* 활성 클래스 표시 */
+  .bar-row.active .bar-label {
+    color: #fff;
+  }
+
+  .bar-row.active .bar-pct {
+    color: #ffd700;
+  }
+</style>
+</head>
+<body>
+
+<!-- 대기 화면 -->
+<div id="waiting">
+  <div class="waiting-icon">🤖</div>
+  <div class="waiting-title">선생님을 기다리는 중...</div>
+  <p class="waiting-sub">선생님이 모델을 전송하면<br>바로 시작돼요!</p>
+</div>
+
+<!-- 로딩 화면 -->
+<div id="loadingMsg">
+  <div class="spinner">⚙️</div>
+  <div class="load-text">AI 모델 불러오는 중...</div>
+</div>
+
+<!-- 메인 화면 -->
+<div id="main">
+  <h1>🤖 가위바위보 AI</h1>
+  <p class="sub">손 모양을 카메라에 보여주세요!</p>
+
+  <div class="webcam-wrap">
+    <canvas id="webcam"></canvas>
+    <div class="result-overlay">
+      <div class="result-emoji" id="resultEmoji">🤔</div>
+      <div class="result-info">
+        <div class="result-label" id="resultLabel">준비중...</div>
+        <div class="result-conf" id="resultConf">손을 카메라에 보여주세요</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bars" id="bars"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+<script>
+  let model, webcam, maxPredictions;
+  let isRunning = false;
+
+  const EMOJI_MAP = {
+    '가위': '✌️',
+    '바위': '✊',
+    '보': '✋',
+    '몰라요': '🤷',
+  };
+
+  const COLOR_MAP = {
+    '가위': 'scissor',
+    '바위': 'rock',
+    '보': 'paper',
+    '몰라요': 'none',
+  };
+
+  function getEmoji(label) {
+    for (const key of Object.keys(EMOJI_MAP)) {
+      if (label.includes(key)) return EMOJI_MAP[key];
+    }
+    return '🤔';
+  }
+
+  function getColor(label) {
+    for (const key of Object.keys(COLOR_MAP)) {
+      if (label.includes(key)) return COLOR_MAP[key];
+    }
+    return 'none';
+  }
+
+  async function startModel(url) {
+    document.getElementById('waiting').style.display = 'none';
+    document.getElementById('loadingMsg').style.display = 'block';
+
+    try {
+      const modelURL = url + 'model.json';
+      const metadataURL = url + 'metadata.json';
+
+      model = await tmImage.load(modelURL, metadataURL);
+      maxPredictions = model.getTotalClasses();
+
+      // 웹캠 시작
+      const flip = true;
+      webcam = new tmImage.Webcam(480, 360, flip);
+      await webcam.setup();
+      await webcam.play();
+
+      const canvas = document.getElementById('webcam');
+      canvas.width = 480;
+      canvas.height = 360;
+
+      // 확률 바 생성
+      const barsDiv = document.getElementById('bars');
+      barsDiv.innerHTML = '';
+      const classNames = model.getClassLabels ? model.getClassLabels() :
+        Array.from({length: maxPredictions}, (_, i) => `클래스 ${i+1}`);
+
+      classNames.forEach((name, i) => {
+        const row = document.createElement('div');
+        row.className = 'bar-row';
+        row.id = `row-${i}`;
+        row.innerHTML = `
+          <div class="bar-emoji">${getEmoji(name)}</div>
+          <div class="bar-label">${name}</div>
+          <div class="bar-bg"><div class="bar-fill ${getColor(name)}" id="bar-${i}" style="width:0%"></div></div>
+          <div class="bar-pct" id="pct-${i}">0%</div>
+        `;
+        barsDiv.appendChild(row);
+      });
+
+      document.getElementById('loadingMsg').style.display = 'none';
+      document.getElementById('main').style.display = 'block';
+
+      isRunning = true;
+      window.requestAnimationFrame(loop);
+
+    } catch(e) {
+      document.getElementById('loadingMsg').innerHTML =
+        `<div style="color:#f87171;font-size:15px;padding:20px;">❌ 모델을 불러오지 못했어요.<br>선생님께 알려주세요.</div>`;
+      console.error(e);
+    }
+  }
+
+  async function loop() {
+    if (!isRunning) return;
+    webcam.update();
+
+    const canvas = document.getElementById('webcam');
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(webcam.canvas, 0, 0, canvas.width, canvas.height);
+
+    const predictions = await model.predict(webcam.canvas);
+
+    // 가장 높은 확률 찾기
+    let maxProb = 0;
+    let maxLabel = '';
+    let maxIdx = 0;
+
+    predictions.forEach((p, i) => {
+      if (p.probability > maxProb) {
+        maxProb = p.probability;
+        maxLabel = p.className;
+        maxIdx = i;
+      }
+    });
+
+    // 결과 표시
+    document.getElementById('resultEmoji').textContent = getEmoji(maxLabel);
+    document.getElementById('resultLabel').textContent = maxLabel;
+    document.getElementById('resultConf').textContent =
+      `확률: ${Math.round(maxProb * 100)}%`;
+
+    // 확률 바 업데이트
+    predictions.forEach((p, i) => {
+      const pct = Math.round(p.probability * 100);
+      const bar = document.getElementById(`bar-${i}`);
+      const pctEl = document.getElementById(`pct-${i}`);
+      const row = document.getElementById(`row-${i}`);
+      if (bar) bar.style.width = pct + '%';
+      if (pctEl) pctEl.textContent = pct + '%';
+      if (row) {
+        row.classList.toggle('active', i === maxIdx);
+      }
+    });
+
+    window.requestAnimationFrame(loop);
+  }
+
+  // 선생님 페이지에서 모델 URL 수신
+  // 방법 1: BroadcastChannel (같은 브라우저)
+  try {
+    const channel = new BroadcastChannel('rsp_model');
+    channel.onmessage = (e) => {
+      if (e.data.type === 'MODEL_URL' && !isRunning) {
+        startModel(e.data.url);
+      }
+    };
+  } catch(e) {}
+
+  // 방법 2: localStorage (이미 저장된 URL)
+  window.onload = function() {
+    const saved = localStorage.getItem('rsp_model_url');
+    if (saved) {
+      startModel(saved);
+    }
+  };
+</script>
+</body>
+</html>
