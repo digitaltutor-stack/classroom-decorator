@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>가위바위보 AI</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -11,36 +11,21 @@
     font-family: 'Noto Sans KR', sans-serif;
     background: #0d0d1a;
     color: #fff;
-    min-height: 100vh;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 16px;
-  }
-
-  h1 {
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 4px;
-    text-align: center;
-  }
-
-  .sub {
-    font-size: 13px;
-    color: #8892a4;
-    margin-bottom: 20px;
-    text-align: center;
+    overflow: hidden;
+    padding: 12px;
   }
 
   /* 대기 화면 */
-  #waiting {
-    text-align: center;
-  }
+  #waiting { text-align: center; }
 
   .waiting-icon {
-    font-size: 64px;
-    margin-bottom: 20px;
+    font-size: 80px;
+    margin-bottom: 24px;
     animation: pulse 2s ease-in-out infinite;
   }
 
@@ -49,28 +34,42 @@
     50% { transform: scale(1.08); opacity: 0.7; }
   }
 
-  .waiting-title {
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 8px;
+  .waiting-title { font-size: 26px; font-weight: 700; margin-bottom: 10px; }
+  .waiting-sub { font-size: 17px; color: #8892a4; line-height: 1.7; }
+
+  /* 로딩 */
+  #loadingMsg { text-align: center; display: none; }
+  .spinner { font-size: 48px; animation: spin 1s linear infinite; margin-bottom: 16px; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .load-text { font-size: 18px; font-weight: 600; color: #a0b0c0; }
+
+  /* 메인 화면 — 세로 꽉 채우기 */
+  #main {
+    display: none;
+    width: 100%;
+    height: 100%;
+    max-width: 900px;
+    flex-direction: column;
+    gap: 12px;
   }
 
-  .waiting-sub {
-    font-size: 14px;
-    color: #8892a4;
-    line-height: 1.6;
+  /* 타이틀 */
+  .title-row {
+    text-align: center;
+    flex-shrink: 0;
   }
 
-  /* 메인 화면 */
-  #main { display: none; width: 100%; max-width: 480px; }
+  .title-row h1 { font-size: 26px; font-weight: 700; }
+  .title-row p  { font-size: 15px; color: #8892a4; margin-top: 2px; }
 
+  /* 웹캠 + 결과 */
   .webcam-wrap {
     position: relative;
     border-radius: 20px;
     overflow: hidden;
     background: #111;
-    margin-bottom: 16px;
-    aspect-ratio: 4/3;
+    flex: 1;
+    min-height: 0;
   }
 
   #webcam {
@@ -78,123 +77,107 @@
     height: 100%;
     object-fit: cover;
     display: block;
-    transform: scaleX(-1);
   }
 
   /* 결과 오버레이 */
   .result-overlay {
     position: absolute;
     bottom: 0; left: 0; right: 0;
-    background: linear-gradient(transparent, rgba(0,0,0,0.85));
-    padding: 20px 20px 16px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.88));
+    padding: 28px 24px 20px;
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
   }
 
   .result-emoji {
-    font-size: 52px;
+    font-size: 72px;
     line-height: 1;
-    transition: all 0.2s;
+    transition: all 0.15s;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
   }
 
   .result-info { flex: 1; }
 
   .result-label {
-    font-size: 26px;
-    font-weight: 700;
-    line-height: 1.2;
-    transition: all 0.2s;
+    font-size: 40px;
+    font-weight: 800;
+    line-height: 1.1;
+    transition: all 0.15s;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
   }
 
   .result-conf {
-    font-size: 13px;
-    color: #a0b0c0;
-    margin-top: 2px;
+    font-size: 18px;
+    color: #c0d8f0;
+    margin-top: 4px;
+    font-weight: 600;
   }
 
-  /* 확률 바 */
+  /* 확률 바 영역 */
   .bars {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
+    flex-shrink: 0;
+    padding: 4px 0;
   }
 
   .bar-row {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    padding: 10px 14px;
+    background: #13131f;
+    border-radius: 14px;
+    border: 2px solid transparent;
+    transition: border-color 0.15s;
   }
 
-  .bar-emoji { font-size: 18px; width: 28px; text-align: center; }
+  .bar-row.active {
+    border-color: #3a4a6a;
+    background: #1a1a2e;
+  }
+
+  .bar-emoji { font-size: 26px; width: 36px; text-align: center; }
 
   .bar-label {
-    font-size: 13px;
-    font-weight: 600;
-    width: 52px;
+    font-size: 18px;
+    font-weight: 700;
+    width: 64px;
     color: #c0d0e0;
   }
 
+  .bar-row.active .bar-label { color: #fff; }
+
   .bar-bg {
     flex: 1;
-    height: 12px;
+    height: 16px;
     background: #1a2a3a;
-    border-radius: 6px;
+    border-radius: 8px;
     overflow: hidden;
   }
 
   .bar-fill {
     height: 100%;
-    border-radius: 6px;
+    border-radius: 8px;
     transition: width 0.15s ease;
-    min-width: 0;
   }
 
-  .bar-fill.scissor { background: #f59e0b; }
-  .bar-fill.rock    { background: #6366f1; }
-  .bar-fill.paper   { background: #10b981; }
-  .bar-fill.none    { background: #64748b; }
+  .bar-fill.scissor { background: linear-gradient(90deg, #f59e0b, #fcd34d); }
+  .bar-fill.rock    { background: linear-gradient(90deg, #6366f1, #a5b4fc); }
+  .bar-fill.paper   { background: linear-gradient(90deg, #10b981, #6ee7b7); }
+  .bar-fill.none    { background: linear-gradient(90deg, #64748b, #94a3b8); }
 
   .bar-pct {
-    font-size: 12px;
-    font-weight: 700;
-    width: 36px;
+    font-size: 16px;
+    font-weight: 800;
+    width: 44px;
     text-align: right;
     color: #e0e8f0;
   }
 
-  /* 상태 메시지 */
-  #loadingMsg {
-    text-align: center;
-    padding: 40px 20px;
-    display: none;
-  }
-
-  .spinner {
-    font-size: 40px;
-    animation: spin 1s linear infinite;
-    margin-bottom: 16px;
-  }
-
-  @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-
-  .load-text {
-    font-size: 16px;
-    font-weight: 600;
-    color: #a0b0c0;
-  }
-
-  /* 활성 클래스 표시 */
-  .bar-row.active .bar-label {
-    color: #fff;
-  }
-
-  .bar-row.active .bar-pct {
-    color: #ffd700;
-  }
+  .bar-row.active .bar-pct { color: #ffd700; }
 </style>
 </head>
 <body>
@@ -214,8 +197,10 @@
 
 <!-- 메인 화면 -->
 <div id="main">
-  <h1>🤖 가위바위보 AI</h1>
-  <p class="sub">손 모양을 카메라에 보여주세요!</p>
+  <div class="title-row">
+    <h1>🤖 가위바위보 AI</h1>
+    <p>손 모양을 카메라에 보여주세요!</p>
+  </div>
 
   <div class="webcam-wrap">
     <canvas id="webcam"></canvas>
@@ -239,17 +224,13 @@
   let isRunning = false;
 
   const EMOJI_MAP = {
-    '가위': '✌️',
-    '바위': '✊',
-    '보': '✋',
-    '몰라요': '🤷',
+    '가위': '✌️', '바위': '✊', '주먹': '✊',
+    '보': '✋', '몰라요': '🤷',
   };
 
   const COLOR_MAP = {
-    '가위': 'scissor',
-    '바위': 'rock',
-    '보': 'paper',
-    '몰라요': 'none',
+    '가위': 'scissor', '바위': 'rock', '주먹': 'rock',
+    '보': 'paper', '몰라요': 'none',
   };
 
   function getEmoji(label) {
@@ -271,27 +252,30 @@
     document.getElementById('loadingMsg').style.display = 'block';
 
     try {
-      const modelURL = url + 'model.json';
-      const metadataURL = url + 'metadata.json';
-
-      model = await tmImage.load(modelURL, metadataURL);
+      const finalUrl = url.endsWith('/') ? url : url + '/';
+      model = await tmImage.load(finalUrl + 'model.json', finalUrl + 'metadata.json');
       maxPredictions = model.getTotalClasses();
 
-      // 웹캠 시작
+      // 화면 크기에 맞게 웹캠 크기 계산
+      const wrap = document.querySelector('.webcam-wrap');
+      const w = wrap.clientWidth || 640;
+      const h = wrap.clientHeight || 480;
+
       const flip = true;
-      webcam = new tmImage.Webcam(480, 360, flip);
+      webcam = new tmImage.Webcam(w, h, flip);
       await webcam.setup();
       await webcam.play();
 
       const canvas = document.getElementById('webcam');
-      canvas.width = 480;
-      canvas.height = 360;
+      canvas.width = w;
+      canvas.height = h;
 
       // 확률 바 생성
       const barsDiv = document.getElementById('bars');
       barsDiv.innerHTML = '';
-      const classNames = model.getClassLabels ? model.getClassLabels() :
-        Array.from({length: maxPredictions}, (_, i) => `클래스 ${i+1}`);
+      const classNames = model.getClassLabels
+        ? model.getClassLabels()
+        : Array.from({length: maxPredictions}, (_, i) => `클래스 ${i+1}`);
 
       classNames.forEach((name, i) => {
         const row = document.createElement('div');
@@ -300,21 +284,26 @@
         row.innerHTML = `
           <div class="bar-emoji">${getEmoji(name)}</div>
           <div class="bar-label">${name}</div>
-          <div class="bar-bg"><div class="bar-fill ${getColor(name)}" id="bar-${i}" style="width:0%"></div></div>
+          <div class="bar-bg">
+            <div class="bar-fill ${getColor(name)}" id="bar-${i}" style="width:0%"></div>
+          </div>
           <div class="bar-pct" id="pct-${i}">0%</div>
         `;
         barsDiv.appendChild(row);
       });
 
       document.getElementById('loadingMsg').style.display = 'none';
-      document.getElementById('main').style.display = 'block';
+      const mainEl = document.getElementById('main');
+      mainEl.style.display = 'flex';
 
       isRunning = true;
       window.requestAnimationFrame(loop);
 
     } catch(e) {
       document.getElementById('loadingMsg').innerHTML =
-        `<div style="color:#f87171;font-size:15px;padding:20px;">❌ 모델을 불러오지 못했어요.<br>선생님께 알려주세요.</div>`;
+        `<div style="color:#f87171;font-size:16px;padding:20px;text-align:center;">
+          ❌ 모델을 불러오지 못했어요.<br>선생님께 알려주세요.
+        </div>`;
       console.error(e);
     }
   }
@@ -329,11 +318,7 @@
 
     const predictions = await model.predict(webcam.canvas);
 
-    // 가장 높은 확률 찾기
-    let maxProb = 0;
-    let maxLabel = '';
-    let maxIdx = 0;
-
+    let maxProb = 0, maxLabel = '', maxIdx = 0;
     predictions.forEach((p, i) => {
       if (p.probability > maxProb) {
         maxProb = p.probability;
@@ -342,13 +327,10 @@
       }
     });
 
-    // 결과 표시
     document.getElementById('resultEmoji').textContent = getEmoji(maxLabel);
     document.getElementById('resultLabel').textContent = maxLabel;
-    document.getElementById('resultConf').textContent =
-      `확률: ${Math.round(maxProb * 100)}%`;
+    document.getElementById('resultConf').textContent = `확률: ${Math.round(maxProb * 100)}%`;
 
-    // 확률 바 업데이트
     predictions.forEach((p, i) => {
       const pct = Math.round(p.probability * 100);
       const bar = document.getElementById(`bar-${i}`);
@@ -356,31 +338,24 @@
       const row = document.getElementById(`row-${i}`);
       if (bar) bar.style.width = pct + '%';
       if (pctEl) pctEl.textContent = pct + '%';
-      if (row) {
-        row.classList.toggle('active', i === maxIdx);
-      }
+      if (row) row.classList.toggle('active', i === maxIdx);
     });
 
     window.requestAnimationFrame(loop);
   }
 
-  // 선생님 페이지에서 모델 URL 수신
-  // 방법 1: BroadcastChannel (같은 브라우저)
+  // BroadcastChannel (같은 기기)
   try {
     const channel = new BroadcastChannel('rsp_model');
     channel.onmessage = (e) => {
-      if (e.data.type === 'MODEL_URL' && !isRunning) {
-        startModel(e.data.url);
-      }
+      if (e.data.type === 'MODEL_URL' && !isRunning) startModel(e.data.url);
     };
   } catch(e) {}
 
-  // 방법 2: localStorage (이미 저장된 URL)
+  // localStorage (저장된 URL)
   window.onload = function() {
     const saved = localStorage.getItem('rsp_model_url');
-    if (saved) {
-      startModel(saved);
-    }
+    if (saved) startModel(saved);
   };
 </script>
 </body>
