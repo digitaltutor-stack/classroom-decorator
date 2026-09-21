@@ -18,85 +18,166 @@
     overflow: hidden;
     padding: 12px;
   }
+
+  /* 대기 화면 */
   #waiting { text-align: center; }
   .waiting-icon { font-size: 80px; margin-bottom: 24px; animation: pulse 2s ease-in-out infinite; }
   @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.08); opacity: 0.7; } }
   .waiting-title { font-size: 26px; font-weight: 700; margin-bottom: 10px; }
   .waiting-sub { font-size: 17px; color: #8892a4; line-height: 1.7; }
 
+  /* 로딩 */
   #loadingMsg { text-align: center; display: none; }
   .spinner { font-size: 48px; animation: spin 1s linear infinite; margin-bottom: 16px; }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   .load-text { font-size: 18px; font-weight: 600; color: #a0b0c0; }
 
-  #main { display: none; width: 100%; height: 100%; max-width: 900px; flex-direction: column; gap: 12px; }
-  .title-row { text-align: center; flex-shrink: 0; }
-  .title-row h1 { font-size: 26px; font-weight: 700; }
-  .title-row p { font-size: 15px; color: #8892a4; margin-top: 2px; }
-
-  .webcam-wrap { position: relative; border-radius: 20px; overflow: hidden; background: #111; flex: 1; min-height: 0; }
-  #webcam { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-  .result-overlay {
-    position: absolute; bottom: 0; left: 0; right: 0;
-    background: linear-gradient(transparent, rgba(0,0,0,0.88));
-    padding: 28px 24px 20px;
-    display: flex; align-items: center; gap: 16px;
+  /* 메인 화면 — 가로 레이아웃 */
+  #main {
+    display: none;
+    width: 100%;
+    height: 100%;
+    flex-direction: column;
+    gap: 8px;
   }
-  .result-emoji { font-size: 72px; line-height: 1; transition: all 0.15s; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }
-  .result-info { flex: 1; }
-  .result-label { font-size: 40px; font-weight: 800; line-height: 1.1; transition: all 0.15s; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
-  .result-conf { font-size: 18px; color: #c0d8f0; margin-top: 4px; font-weight: 600; }
 
-  .bars { display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; padding: 4px 0; }
+  /* 타이틀 */
+  .title-row {
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .title-row h1 { font-size: 22px; font-weight: 700; }
+  .title-row p { font-size: 13px; color: #8892a4; margin-top: 2px; }
+
+  /* 콘텐츠 영역 — 좌우 분할 */
+  .content-row {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* 왼쪽 — 웹캠 */
+  .webcam-wrap {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #111;
+    flex: 1.2;
+    min-width: 0;
+  }
+
+  #webcam {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* 웹캠 하단 결과 오버레이 */
+  .result-overlay {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.88));
+    padding: 24px 20px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .result-emoji { font-size: 56px; line-height: 1; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }
+  .result-info { flex: 1; }
+  .result-label { font-size: 34px; font-weight: 800; line-height: 1.1; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+  .result-conf { font-size: 15px; color: #c0d8f0; margin-top: 3px; font-weight: 600; }
+
+  /* 오른쪽 — 확률 바 */
+  .bars-wrap {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .bars-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #8892a4;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+
+  .bars { display: flex; flex-direction: column; gap: 10px; }
+
   .bar-row {
-    display: flex; align-items: center; gap: 12px;
-    padding: 10px 14px; background: #13131f; border-radius: 14px;
-    border: 2px solid transparent; transition: border-color 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: #13131f;
+    border-radius: 14px;
+    border: 2px solid transparent;
+    transition: border-color 0.15s, background 0.15s;
   }
   .bar-row.active { border-color: #3a4a6a; background: #1a1a2e; }
-  .bar-emoji { font-size: 26px; width: 36px; text-align: center; }
-  .bar-label { font-size: 18px; font-weight: 700; width: 64px; color: #c0d0e0; }
+
+  .bar-emoji { font-size: 28px; width: 36px; text-align: center; }
+  .bar-label { font-size: 17px; font-weight: 700; width: 56px; color: #c0d0e0; }
   .bar-row.active .bar-label { color: #fff; }
+
   .bar-bg { flex: 1; height: 16px; background: #1a2a3a; border-radius: 8px; overflow: hidden; }
   .bar-fill { height: 100%; border-radius: 8px; transition: width 0.15s ease; }
   .bar-fill.scissor { background: linear-gradient(90deg, #f59e0b, #fcd34d); }
   .bar-fill.rock    { background: linear-gradient(90deg, #6366f1, #a5b4fc); }
   .bar-fill.paper   { background: linear-gradient(90deg, #10b981, #6ee7b7); }
   .bar-fill.none    { background: linear-gradient(90deg, #64748b, #94a3b8); }
+
   .bar-pct { font-size: 16px; font-weight: 800; width: 44px; text-align: right; color: #e0e8f0; }
   .bar-row.active .bar-pct { color: #ffd700; }
 </style>
 </head>
 <body>
 
+<!-- 대기 화면 -->
 <div id="waiting">
   <div class="waiting-icon">🤖</div>
   <div class="waiting-title">선생님을 기다리는 중...</div>
   <p class="waiting-sub">선생님이 모델을 전송하면<br>바로 시작돼요!</p>
 </div>
 
+<!-- 로딩 화면 -->
 <div id="loadingMsg">
   <div class="spinner">⚙️</div>
   <div class="load-text">AI 모델 불러오는 중...</div>
 </div>
 
+<!-- 메인 화면 -->
 <div id="main">
   <div class="title-row">
     <h1>🤖 가위바위보 AI</h1>
     <p>손 모양을 카메라에 보여주세요!</p>
   </div>
-  <div class="webcam-wrap">
-    <canvas id="webcam"></canvas>
-    <div class="result-overlay">
-      <div class="result-emoji" id="resultEmoji">🤔</div>
-      <div class="result-info">
-        <div class="result-label" id="resultLabel">준비중...</div>
-        <div class="result-conf" id="resultConf">손을 카메라에 보여주세요</div>
+
+  <div class="content-row">
+    <!-- 왼쪽: 웹캠 -->
+    <div class="webcam-wrap">
+      <canvas id="webcam"></canvas>
+      <div class="result-overlay">
+        <div class="result-emoji" id="resultEmoji">🤔</div>
+        <div class="result-info">
+          <div class="result-label" id="resultLabel">준비중...</div>
+          <div class="result-conf" id="resultConf">손을 카메라에 보여주세요</div>
+        </div>
       </div>
     </div>
+
+    <!-- 오른쪽: 확률 바 -->
+    <div class="bars-wrap">
+      <div class="bars-title">📊 AI가 보는 확률</div>
+      <div class="bars" id="bars"></div>
+    </div>
   </div>
-  <div class="bars" id="bars"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
@@ -142,8 +223,8 @@
       model = await tmImage.load(finalUrl + 'model.json', finalUrl + 'metadata.json');
 
       const wrap = document.querySelector('.webcam-wrap');
-      const w = wrap.clientWidth || 640;
-      const h = wrap.clientHeight || 480;
+      const w = wrap.clientWidth || 480;
+      const h = wrap.clientHeight || 360;
 
       webcam = new tmImage.Webcam(w, h, true);
       await webcam.setup();
@@ -215,25 +296,17 @@
     window.requestAnimationFrame(loop);
   }
 
-  // Firebase 실시간 리스너 — 선생님이 전송하면 바로 감지
   const modelRef = doc(db, 'rsp_model', 'current');
 
-  // 페이지 로드 시 서버에서 즉시 읽기 (프리워밍)
   try {
     const snap = await getDocFromServer(modelRef);
-    if (snap.exists() && snap.data().url && !isRunning) {
-      startModel(snap.data().url);
-    }
+    if (snap.exists() && snap.data().url && !isRunning) startModel(snap.data().url);
   } catch(e) {}
 
-  // 실시간 변경 감지
   onSnapshot(modelRef, (snap) => {
-    if (snap.exists() && snap.data().url && !isRunning) {
-      startModel(snap.data().url);
-    }
+    if (snap.exists() && snap.data().url && !isRunning) startModel(snap.data().url);
   });
 
-  // 화면 전환 시 재연결
   document.addEventListener('visibilitychange', async () => {
     if (document.visibilityState === 'visible' && !isRunning) {
       try {
