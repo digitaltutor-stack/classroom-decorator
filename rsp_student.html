@@ -6,7 +6,6 @@
 <title>가위바위보 AI</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
   body {
     font-family: 'Noto Sans KR', sans-serif;
     background: #0d0d1a;
@@ -19,189 +18,74 @@
     overflow: hidden;
     padding: 12px;
   }
-
-  /* 대기 화면 */
   #waiting { text-align: center; }
-
-  .waiting-icon {
-    font-size: 80px;
-    margin-bottom: 24px;
-    animation: pulse 2s ease-in-out infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.08); opacity: 0.7; }
-  }
-
+  .waiting-icon { font-size: 80px; margin-bottom: 24px; animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.08); opacity: 0.7; } }
   .waiting-title { font-size: 26px; font-weight: 700; margin-bottom: 10px; }
   .waiting-sub { font-size: 17px; color: #8892a4; line-height: 1.7; }
 
-  /* 로딩 */
   #loadingMsg { text-align: center; display: none; }
   .spinner { font-size: 48px; animation: spin 1s linear infinite; margin-bottom: 16px; }
   @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   .load-text { font-size: 18px; font-weight: 600; color: #a0b0c0; }
 
-  /* 메인 화면 — 세로 꽉 채우기 */
-  #main {
-    display: none;
-    width: 100%;
-    height: 100%;
-    max-width: 900px;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  /* 타이틀 */
-  .title-row {
-    text-align: center;
-    flex-shrink: 0;
-  }
-
+  #main { display: none; width: 100%; height: 100%; max-width: 900px; flex-direction: column; gap: 12px; }
+  .title-row { text-align: center; flex-shrink: 0; }
   .title-row h1 { font-size: 26px; font-weight: 700; }
-  .title-row p  { font-size: 15px; color: #8892a4; margin-top: 2px; }
+  .title-row p { font-size: 15px; color: #8892a4; margin-top: 2px; }
 
-  /* 웹캠 + 결과 */
-  .webcam-wrap {
-    position: relative;
-    border-radius: 20px;
-    overflow: hidden;
-    background: #111;
-    flex: 1;
-    min-height: 0;
-  }
+  .webcam-wrap { position: relative; border-radius: 20px; overflow: hidden; background: #111; flex: 1; min-height: 0; }
+  #webcam { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-  #webcam {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  /* 결과 오버레이 */
   .result-overlay {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
+    position: absolute; bottom: 0; left: 0; right: 0;
     background: linear-gradient(transparent, rgba(0,0,0,0.88));
     padding: 28px 24px 20px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
+    display: flex; align-items: center; gap: 16px;
   }
-
-  .result-emoji {
-    font-size: 72px;
-    line-height: 1;
-    transition: all 0.15s;
-    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
-  }
-
+  .result-emoji { font-size: 72px; line-height: 1; transition: all 0.15s; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5)); }
   .result-info { flex: 1; }
+  .result-label { font-size: 40px; font-weight: 800; line-height: 1.1; transition: all 0.15s; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+  .result-conf { font-size: 18px; color: #c0d8f0; margin-top: 4px; font-weight: 600; }
 
-  .result-label {
-    font-size: 40px;
-    font-weight: 800;
-    line-height: 1.1;
-    transition: all 0.15s;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
-  }
-
-  .result-conf {
-    font-size: 18px;
-    color: #c0d8f0;
-    margin-top: 4px;
-    font-weight: 600;
-  }
-
-  /* 확률 바 영역 */
-  .bars {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    flex-shrink: 0;
-    padding: 4px 0;
-  }
-
+  .bars { display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; padding: 4px 0; }
   .bar-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
-    background: #13131f;
-    border-radius: 14px;
-    border: 2px solid transparent;
-    transition: border-color 0.15s;
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; background: #13131f; border-radius: 14px;
+    border: 2px solid transparent; transition: border-color 0.15s;
   }
-
-  .bar-row.active {
-    border-color: #3a4a6a;
-    background: #1a1a2e;
-  }
-
+  .bar-row.active { border-color: #3a4a6a; background: #1a1a2e; }
   .bar-emoji { font-size: 26px; width: 36px; text-align: center; }
-
-  .bar-label {
-    font-size: 18px;
-    font-weight: 700;
-    width: 64px;
-    color: #c0d0e0;
-  }
-
+  .bar-label { font-size: 18px; font-weight: 700; width: 64px; color: #c0d0e0; }
   .bar-row.active .bar-label { color: #fff; }
-
-  .bar-bg {
-    flex: 1;
-    height: 16px;
-    background: #1a2a3a;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-
-  .bar-fill {
-    height: 100%;
-    border-radius: 8px;
-    transition: width 0.15s ease;
-  }
-
+  .bar-bg { flex: 1; height: 16px; background: #1a2a3a; border-radius: 8px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 8px; transition: width 0.15s ease; }
   .bar-fill.scissor { background: linear-gradient(90deg, #f59e0b, #fcd34d); }
   .bar-fill.rock    { background: linear-gradient(90deg, #6366f1, #a5b4fc); }
   .bar-fill.paper   { background: linear-gradient(90deg, #10b981, #6ee7b7); }
   .bar-fill.none    { background: linear-gradient(90deg, #64748b, #94a3b8); }
-
-  .bar-pct {
-    font-size: 16px;
-    font-weight: 800;
-    width: 44px;
-    text-align: right;
-    color: #e0e8f0;
-  }
-
+  .bar-pct { font-size: 16px; font-weight: 800; width: 44px; text-align: right; color: #e0e8f0; }
   .bar-row.active .bar-pct { color: #ffd700; }
 </style>
 </head>
 <body>
 
-<!-- 대기 화면 -->
 <div id="waiting">
   <div class="waiting-icon">🤖</div>
   <div class="waiting-title">선생님을 기다리는 중...</div>
   <p class="waiting-sub">선생님이 모델을 전송하면<br>바로 시작돼요!</p>
 </div>
 
-<!-- 로딩 화면 -->
 <div id="loadingMsg">
   <div class="spinner">⚙️</div>
   <div class="load-text">AI 모델 불러오는 중...</div>
 </div>
 
-<!-- 메인 화면 -->
 <div id="main">
   <div class="title-row">
     <h1>🤖 가위바위보 AI</h1>
     <p>손 모양을 카메라에 보여주세요!</p>
   </div>
-
   <div class="webcam-wrap">
     <canvas id="webcam"></canvas>
     <div class="result-overlay">
@@ -212,57 +96,56 @@
       </div>
     </div>
   </div>
-
   <div class="bars" id="bars"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 
-<script>
-  let model, webcam, maxPredictions;
-  let isRunning = false;
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, doc, onSnapshot, getDocFromServer } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  const EMOJI_MAP = {
-    '가위': '✌️', '바위': '✊', '주먹': '✊',
-    '보': '✋', '몰라요': '🤷',
+  const firebaseConfig = {
+    apiKey: "AIzaSyCNl5OGGWMQwx6axvqP12oAUScRfavNlzw",
+    authDomain: "class-link-3a434.firebaseapp.com",
+    projectId: "class-link-3a434",
+    storageBucket: "class-link-3a434.firebasestorage.app",
+    messagingSenderId: "429666244390",
+    appId: "1:429666244390:web:2fc9f7730787b1eeb313e7"
   };
 
-  const COLOR_MAP = {
-    '가위': 'scissor', '바위': 'rock', '주먹': 'rock',
-    '보': 'paper', '몰라요': 'none',
-  };
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  let model, webcam, isRunning = false;
+
+  const EMOJI_MAP = { '가위': '✌️', '바위': '✊', '주먹': '✊', '보': '✋', '몰라요': '🤷' };
+  const COLOR_MAP = { '가위': 'scissor', '바위': 'rock', '주먹': 'rock', '보': 'paper', '몰라요': 'none' };
 
   function getEmoji(label) {
-    for (const key of Object.keys(EMOJI_MAP)) {
-      if (label.includes(key)) return EMOJI_MAP[key];
-    }
+    for (const key of Object.keys(EMOJI_MAP)) { if (label.includes(key)) return EMOJI_MAP[key]; }
     return '🤔';
   }
-
   function getColor(label) {
-    for (const key of Object.keys(COLOR_MAP)) {
-      if (label.includes(key)) return COLOR_MAP[key];
-    }
+    for (const key of Object.keys(COLOR_MAP)) { if (label.includes(key)) return COLOR_MAP[key]; }
     return 'none';
   }
 
   async function startModel(url) {
+    if (isRunning) return;
     document.getElementById('waiting').style.display = 'none';
     document.getElementById('loadingMsg').style.display = 'block';
 
     try {
       const finalUrl = url.endsWith('/') ? url : url + '/';
       model = await tmImage.load(finalUrl + 'model.json', finalUrl + 'metadata.json');
-      maxPredictions = model.getTotalClasses();
 
-      // 화면 크기에 맞게 웹캠 크기 계산
       const wrap = document.querySelector('.webcam-wrap');
       const w = wrap.clientWidth || 640;
       const h = wrap.clientHeight || 480;
 
-      const flip = true;
-      webcam = new tmImage.Webcam(w, h, flip);
+      webcam = new tmImage.Webcam(w, h, true);
       await webcam.setup();
       await webcam.play();
 
@@ -270,12 +153,11 @@
       canvas.width = w;
       canvas.height = h;
 
-      // 확률 바 생성
       const barsDiv = document.getElementById('bars');
       barsDiv.innerHTML = '';
       const classNames = model.getClassLabels
         ? model.getClassLabels()
-        : Array.from({length: maxPredictions}, (_, i) => `클래스 ${i+1}`);
+        : Array.from({length: model.getTotalClasses()}, (_, i) => `클래스 ${i+1}`);
 
       classNames.forEach((name, i) => {
         const row = document.createElement('div');
@@ -284,26 +166,21 @@
         row.innerHTML = `
           <div class="bar-emoji">${getEmoji(name)}</div>
           <div class="bar-label">${name}</div>
-          <div class="bar-bg">
-            <div class="bar-fill ${getColor(name)}" id="bar-${i}" style="width:0%"></div>
-          </div>
+          <div class="bar-bg"><div class="bar-fill ${getColor(name)}" id="bar-${i}" style="width:0%"></div></div>
           <div class="bar-pct" id="pct-${i}">0%</div>
         `;
         barsDiv.appendChild(row);
       });
 
       document.getElementById('loadingMsg').style.display = 'none';
-      const mainEl = document.getElementById('main');
-      mainEl.style.display = 'flex';
+      document.getElementById('main').style.display = 'flex';
 
       isRunning = true;
       window.requestAnimationFrame(loop);
 
     } catch(e) {
       document.getElementById('loadingMsg').innerHTML =
-        `<div style="color:#f87171;font-size:16px;padding:20px;text-align:center;">
-          ❌ 모델을 불러오지 못했어요.<br>선생님께 알려주세요.
-        </div>`;
+        `<div style="color:#f87171;font-size:16px;padding:20px;text-align:center;">❌ 모델을 불러오지 못했어요.<br>선생님께 알려주세요.</div>`;
       console.error(e);
     }
   }
@@ -311,20 +188,14 @@
   async function loop() {
     if (!isRunning) return;
     webcam.update();
-
     const canvas = document.getElementById('webcam');
     const ctx = canvas.getContext('2d');
     ctx.drawImage(webcam.canvas, 0, 0, canvas.width, canvas.height);
 
     const predictions = await model.predict(webcam.canvas);
-
     let maxProb = 0, maxLabel = '', maxIdx = 0;
     predictions.forEach((p, i) => {
-      if (p.probability > maxProb) {
-        maxProb = p.probability;
-        maxLabel = p.className;
-        maxIdx = i;
-      }
+      if (p.probability > maxProb) { maxProb = p.probability; maxLabel = p.className; maxIdx = i; }
     });
 
     document.getElementById('resultEmoji').textContent = getEmoji(maxLabel);
@@ -344,19 +215,33 @@
     window.requestAnimationFrame(loop);
   }
 
-  // BroadcastChannel (같은 기기)
+  // Firebase 실시간 리스너 — 선생님이 전송하면 바로 감지
+  const modelRef = doc(db, 'rsp_model', 'current');
+
+  // 페이지 로드 시 서버에서 즉시 읽기 (프리워밍)
   try {
-    const channel = new BroadcastChannel('rsp_model');
-    channel.onmessage = (e) => {
-      if (e.data.type === 'MODEL_URL' && !isRunning) startModel(e.data.url);
-    };
+    const snap = await getDocFromServer(modelRef);
+    if (snap.exists() && snap.data().url && !isRunning) {
+      startModel(snap.data().url);
+    }
   } catch(e) {}
 
-  // localStorage (저장된 URL)
-  window.onload = function() {
-    const saved = localStorage.getItem('rsp_model_url');
-    if (saved) startModel(saved);
-  };
+  // 실시간 변경 감지
+  onSnapshot(modelRef, (snap) => {
+    if (snap.exists() && snap.data().url && !isRunning) {
+      startModel(snap.data().url);
+    }
+  });
+
+  // 화면 전환 시 재연결
+  document.addEventListener('visibilitychange', async () => {
+    if (document.visibilityState === 'visible' && !isRunning) {
+      try {
+        const snap = await getDocFromServer(modelRef);
+        if (snap.exists() && snap.data().url) startModel(snap.data().url);
+      } catch(e) {}
+    }
+  });
 </script>
 </body>
 </html>
