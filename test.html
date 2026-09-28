@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>수학 스네이크 · 세인쌤 - 소수의 나눗셈</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#07111b;color:#fff;font-family:"Malgun Gothic",system-ui,sans-serif}
+#wrap{height:100%;display:grid;grid-template-rows:auto 1fr auto}
+#hud{display:flex;gap:14px;align-items:center;padding:8px 12px;background:#101d2a;border-bottom:2px solid #28445d;font-weight:800;flex-wrap:wrap}
+#hud b{color:#73ff9d}.bar{width:150px;height:10px;background:#263747;border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:#63d7ff;width:0}
+#stage{position:relative;min-height:0}canvas{display:block;width:100%;height:100%;background:#0a1722}
+#help{position:absolute;left:12px;top:12px;background:#07111bcc;border:1px solid #42647e;padding:8px 10px;font-size:12px;line-height:1.5;border-radius:8px;pointer-events:none}
+#toast{position:absolute;left:50%;top:18%;transform:translateX(-50%);font-size:22px;font-weight:900;text-shadow:2px 2px #000;pointer-events:none;opacity:0;transition:.2s}
+#bottom{display:flex;justify-content:center;gap:8px;padding:7px;background:#101d2a;border-top:2px solid #28445d}
+button{font:inherit;font-weight:800;border:1px solid #5b7b94;border-radius:8px;padding:9px 13px;background:#1c3448;color:#fff;cursor:pointer}
+button:hover{filter:brightness(1.2)}
+.overlay{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:16px;z-index:10}
+.card{width:min(620px,96vw);max-height:94vh;overflow:auto;background:#152636;border:2px solid #5c819d;border-radius:14px;padding:20px;box-shadow:0 18px 60px #000}
+h1,h2{margin:0 0 10px}.sub{color:#a9c5d9;line-height:1.6}.opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.opts button{padding:13px;background:#223e54}
+#feedback{margin-top:12px;padding:10px;border-radius:8px;background:#0d1b27;display:none;line-height:1.5}
+.big{width:100%;padding:13px;margin-top:10px;background:#17663c}
+#intro{display:flex}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.stat{background:#0c1a25;padding:10px;text-align:center;border-radius:8px}.stat strong{display:block;font-size:22px;color:#7cff9d}
+@media(max-width:650px){#help{display:none}.opts{grid-template-columns:1fr}.bar{width:100px}}
+
+#bestTag{color:#ffd86b}
+#skinTag{color:#ff9cf4}
+
+.dexgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}
+.dexrow{background:#0c1a25;border:1px solid #36566e;border-radius:10px;padding:11px;display:flex;gap:10px;align-items:center}
+.dexicon{width:52px;height:52px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#172b3a;font-size:27px;flex:0 0 auto}
+.dexrow.locked{filter:none;background:#080e14;border-color:#252e35}
+.dexrow.locked .dexicon{background:#030608;color:#7d8790;font-weight:900}
+.dexrow.locked .dexname{color:#88929a;letter-spacing:2px}
+.dexname{font-weight:900;font-size:15px}.dexscore{font-size:12px;color:#9fc1d7;margin-top:4px}
+.dexrow.current{outline:2px solid #ffe15e;box-shadow:0 0 15px #ffe15e55}
+.dexhead{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+@media(max-width:650px){.dexgrid{grid-template-columns:1fr}}
+
+.cubeView{display:inline-grid;gap:3px;margin:5px}.cubeCell{width:34px;height:34px;border:1px solid #58758b;display:flex;align-items:center;justify-content:center;font-weight:900;border-radius:4px;background:#132a3a}
+.cubeOn{background:#5bbcff;color:#07111b;box-shadow:inset 0 -5px #3385bb}.heightOn{background:#ffd45b;color:#14202b;box-shadow:inset 0 -5px #b78b20}
+.viewLabel{font-size:12px;color:#a9c5d9;margin:3px 0}.miniViews{display:flex;gap:16px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
+#touchPad{position:absolute;left:18px;bottom:18px;width:140px;height:140px;border-radius:50%;background:#07111bcc;border:3px solid #7ba0b9;z-index:7;display:none;touch-action:none;user-select:none}#joyKnob{position:absolute;left:42px;top:42px;width:52px;height:52px;border-radius:50%;background:#63d7ff;border:3px solid #d9f7ff;box-shadow:0 4px 14px #0009;pointer-events:none}#touchQuiz{position:absolute;right:18px;bottom:28px;z-index:7;display:none;width:88px;height:88px;border-radius:50%;background:#17663cdd;border:3px solid #8dffac;color:#fff;font-weight:900;touch-action:manipulation}@media(pointer:coarse),(max-width:900px){#touchPad,#touchQuiz{display:block}#stage{touch-action:none}}</style>
+</head>
+<body>
+<div id="wrap">
+ <div id="hud">
+  <span style="font-size:18px;color:#fff">🐍 수학 스네이크 <b style="color:#ffd86b">· 세인쌤</b></span>
+  <span>🐍 길이 <b id="len">4</b></span><span>⭐ 점수 <b id="score">0</b></span>
+  <span>🔥 콤보 <b id="combo">0</b></span><span>🧠 정답 <b id="correct">0</b>/30</span>
+  <div class="bar"><i id="prog"></i></div><span>❤️ <b id="hp">3</b></span><span>🏆 최고 <b id="bestTag">0</b></span><span>🎨 <b id="skinTag">초록 지렁이</b></span>
+ </div>
+ <div id="stage"><canvas id="c"></canvas><div id="touchPad"><div id="joyKnob"></div></div><button id="touchQuiz">🧠<br>문제</button><div id="help">방향키 / WASD 이동<br>📱 패드: 조이스틱 / 스와이프<br>🍎 먹이 다수 출현 · 성장<br>🧠 퀴즈 = 큰 보상 + 스킨 진화<br>👻 후반부터 추격 몬스터 등장<br>🧱 후반부터 장애물 생성</div><div id="toast"></div></div>
+ <div id="bottom"><button id="bgmBtn" onclick="toggleBGM()">🎵 BGM ON</button><button onclick="openDex()">📖 진화 도감</button><button onclick="pauseToggle()">⏸ 일시정지</button><button onclick="openQuiz(true)">🧠 문제 풀기</button><button onclick="restart()">↻ 다시 시작</button></div>
+</div>
+
+<div class="overlay" id="intro">
+ <div class="card"><h1>🐍 수학 스네이크</h1><h2>6학년 2학기 · 소수의 나눗셈</h2>
+ <p class="sub">먹이를 먹고 몸집을 키우세요. 빛나는 <b>🧠 퀴즈구슬</b>을 먹으면 소수의 나눗셈 문제가 등장합니다.<br>
+ 정답을 맞히면 <b>황금먹이 생성 + 몸길이 성장 + 큰 점수 + 무적</b>이 즉시 발동합니다. 이제 진화는 문제 개수가 아니라 <b>총점</b>으로 결정됩니다. 점수를 모아 <b>견습 → 모험가 → 병사 → 기사 → 용사 → 신</b>으로 진화하세요. 30문제를 모두 해결해도 계속 플레이할 수 있습니다.</p>
+ <p class="sub">벽이나 자기 몸에 부딪히면 ❤️를 하나 잃습니다. 후반에는 👻 몬스터와 🧱 장애물이 등장하지만, 몬스터는 뱀보다 느리고 충돌 뒤에는 긴 무적 시간이 있어 억까를 줄였습니다.</p>
+ <div style="background:#0b1a27;border:1px solid #3f6179;border-radius:10px;padding:10px;margin:12px 0;line-height:1.7">
+<b>🐛 진화 로드맵</b><br>
+0점 🧢 견습 → 2,000점 🤠 모험가 → 5,000점 ⛑️ 병사 → 10,000점 🛡️ 기사 → 18,000점 👑 용사<br>
+30,000점 ⚡ <b>신 지렁이</b> → 45,000점 ❓ <b>??? 지렁이</b> → 65,000점 ❓ <b>??? 지렁이</b><br>
+95,000점 ❓ <b>??? 지렁이</b> → 140,000점 ❓ <b>??? 지렁이</b> → 200,000점 ❓ <b>??? 지렁이</b>
+</div>
+<button class="big" onclick="start()">게임 시작</button></div>
+</div>
+
+<div class="overlay" id="quiz"><div class="card">
+ <h2>🧠 소수의 나눗셈 퀴즈 <span id="qno"></span></h2>
+ <div id="qvisual" style="display:none;margin:10px auto 14px;max-width:430px;background:#091723;border:1px solid #42647e;border-radius:10px;padding:10px;text-align:center"></div>
+ <div id="qtext" class="sub" style="font-size:19px;color:white;font-weight:800"></div>
+ <div class="opts" id="opts"></div><div id="feedback"></div><button id="next" class="big" style="display:none" onclick="closeQuiz()">보상 받고 계속!</button>
+</div></div>
+
+
+<div class="overlay" id="dex"><div class="card" style="width:min(760px,96vw)">
+ <div class="dexhead"><div><h2>📖 지렁이 진화 도감</h2><div class="sub">점수를 모아 새로운 모습을 해금하라. <b>신 지렁이 이후의 정체는 직접 확인!</b></div></div>
+ <button onclick="closeDex()">✕ 닫기</button></div>
+ <div id="dexProgress" style="margin-top:10px;font-weight:900;color:#ffd86b"></div>
+ <div class="dexgrid" id="dexList"></div>
+</div></div>
+<div class="overlay" id="gameover"><div class="card"><h1 id="overTitle">💥 게임 오버</h1>
+<div class="stats"><div class="stat">점수<strong id="os">0</strong></div><div class="stat">최대 길이<strong id="ol">0</strong></div><div class="stat">정답<strong id="oc">0</strong></div></div>
+<button class="big" onclick="restart()">다시 도전</button></div></div>
+
+<script>
+const QUESTIONS=[["6.48 ÷ 1.2 = ?",["0.54","5.4","54","7.68"],1,"64.8÷12=5.4이므로 답은 5.4입니다.",null],["0.875 ÷ 0.35 = ?",["0.25","2.5","25","3.25"],1,"87.5÷35=2.5입니다.",null],["14.28 ÷ 4.2 = ?",["0.34","3.4","34","10.08"],1,"142.8÷42=3.4입니다.",null],["2.772 ÷ 0.36 = ?",["0.77","7.7","77","8.7"],1,"277.2÷36=7.7입니다.",null],["어떤 수 ÷ 0.45 = 7.2입니다. 어떤 수는?",["3.24","16","6.75","32.4"],0,"7.2×0.45=3.24입니다.",null],["어떤 수 ÷ 1.25 = 3.6입니다. 어떤 수는?",["2.88","4.5","45","0.45"],1,"3.6×1.25=4.5입니다.",null],["7.3 ÷ 0.8의 몫을 반올림하여 소수 첫째 자리까지 나타내면?",["9.0","9.1","9.2","9.3"],1,"7.3÷0.8=9.125이므로 소수 둘째 자리 2를 버려 9.1입니다.",null],["11.6 ÷ 2.7의 몫을 반올림하여 소수 첫째 자리까지 나타내면?",["4.2","4.3","4.4","4.5"],1,"11.6÷2.7=4.296…이므로 소수 둘째 자리 9를 올려 4.3입니다.",null],["8 ÷ 1.3의 몫을 반올림하여 소수 둘째 자리까지 나타내면?",["6.14","6.15","6.16","6.20"],1,"8÷1.3=6.1538…이므로 소수 셋째 자리 3을 버려 6.15입니다.",null],["5.9 ÷ 0.7의 몫을 반올림하여 소수 둘째 자리까지 나타내면?",["8.42","8.43","8.44","8.40"],1,"5.9÷0.7=8.42857…이므로 소수 셋째 자리 8을 올려 8.43입니다.",null],["9.7 ÷ 1.6의 몫을 자연수 부분까지 구했을 때 몫과 나머지는?",["몫 6, 나머지 0.1","몫 6, 나머지 1","몫 5, 나머지 1.7","몫 7, 나머지 0.5"],0,"1.6×6=9.6이고 9.7-9.6=0.1입니다.",null],["6.35 ÷ 0.9의 몫을 자연수 부분까지 구했을 때 나머지는?",["0.05","0.5","0.35","0.9"],0,"0.9×7=6.3이므로 나머지는 0.05입니다.",null],["12.8 ÷ 2.5의 몫을 자연수 부분까지 구하면?",["몫 4, 나머지 2.8","몫 5, 나머지 0.3","몫 5, 나머지 3","몫 6, 나머지 0.2"],1,"2.5×5=12.5이고 나머지는 0.3입니다.",null],["4.73 ÷ 0.6의 몫을 자연수 부분까지 구했을 때 나머지는?",["0.03","0.53","0.3","0.73"],1,"0.6×7=4.2이고 4.73-4.2=0.53입니다.",null],["나머지가 있는 소수의 나눗셈 8.4 ÷ 1.3에서 몫을 6으로 할 때, 계산을 검산한 식으로 옳은 것은?",["1.3×6+0.6=8.4","1.3×6+0.4=8.4","1.3+6×0.6=8.4","8.4×1.3+0.6=6"],0,"나누는 수×몫+나머지=나누어지는 수이므로 1.3×6+0.6=8.4입니다.",null],["5.2 kg의 밀가루를 한 봉지에 0.75 kg씩 가득 담습니다. 가득 찬 봉지는 몇 개이고 얼마가 남나요?",["6봉지, 0.7 kg","6봉지, 0.07 kg","7봉지, 0.05 kg","6봉지, 7 kg"],0,"0.75×6=4.5이고 5.2-4.5=0.7이므로 6봉지, 0.7 kg가 남습니다.",null],["9.8 m의 철사를 1.4 m씩 자르면 1.4 m짜리 철사는 몇 도막 나오나요?",["6도막","7도막","8도막","14도막"],1,"9.8÷1.4=7이므로 7도막입니다.",null],["8.3 L의 주스를 한 병에 0.6 L씩 가득 담으면 몇 병을 채우고 얼마가 남나요?",["13병, 0.5 L","13병, 0.05 L","14병, 0.1 L","12병, 1.1 L"],0,"0.6×13=7.8이고 8.3-7.8=0.5이므로 13병, 0.5 L가 남습니다.",null],["길이 12 m인 리본으로 1.7 m짜리 리본을 최대 몇 개 만들 수 있나요?",["6개","7개","7.1개","8개"],1,"12÷1.7=7.05…이므로 완전한 리본은 최대 7개입니다.",null],["15 kg의 쌀을 한 봉지에 2.4 kg씩 가득 담습니다. 6봉지를 채운 뒤 남는 쌀은?",["0.4 kg","0.6 kg","1.4 kg","2.4 kg"],1,"2.4×6=14.4이고 15-14.4=0.6 kg입니다.",null],["4.32 ÷ 0.18을 자연수의 나눗셈으로 바르게 고친 것은?",["432÷18","43.2÷18","432÷1.8","4.32÷18"],0,"나누어지는 수와 나누는 수에 각각 100을 곱하면 432÷18입니다.",null],["0.756 ÷ 0.24를 계산하기 위해 두 수에 같은 수를 곱했습니다. 가장 알맞은 것은?",["10","100","1000","0.1"],2,"두 수에 1000을 곱하면 756÷240으로 바꿀 수 있습니다.",null],["다음 중 몫이 가장 큰 것은?",["6.3÷0.9","6.3÷0.7","6.3÷1.4","6.3÷2.1"],1,"나누어지는 수가 같을 때 나누는 수가 가장 작은 0.7인 식의 몫이 가장 큽니다.",null],["계산 결과가 5보다 작고 4보다 큰 것은?",["7.2÷1.5","8.4÷1.6","6.3÷1.2","9.8÷2"],0,"각 몫은 4.8, 5.25, 5.25, 4.9이므로 조건에 맞는 것은 7.2÷1.5입니다.",null],["□ ÷ 0.6 = 8.4일 때 □에 알맞은 수는?",["5.04","7.8","14","50.4"],0,"8.4×0.6=5.04입니다.",null],["어떤 수를 2.4로 나누었더니 몫이 3.5였습니다. 어떤 수의 2배는?",["4.2","8.4","16.8","28"],2,"어떤 수는 2.4×3.5=8.4이고, 그 2배는 16.8입니다.",null],["한 자동차가 3.5 L의 연료로 48.3 km를 갔습니다. 1 L로 간 거리를 반올림하여 소수 첫째 자리까지 나타내면?",["13.7 km","13.8 km","13.9 km","14.0 km"],1,"48.3÷3.5=13.8이므로 13.8 km입니다.",null],["18.5 m의 천을 한 사람에게 2.3 m씩 나누어 주려고 합니다. 최대 몇 명에게 나누어 주고 얼마가 남나요?",["7명, 2.4 m","8명, 0.1 m","8명, 1.1 m","9명, 0.2 m"],1,"2.3×8=18.4이므로 8명에게 주고 0.1 m가 남습니다.",null],["6.75 L의 음료를 0.8 L짜리 병에 가득 담은 뒤 남은 양을 구하려고 합니다. 알맞은 답은?",["8병, 0.35 L","8병, 0.3 L","9병, 0.45 L","8병, 3.5 L"],0,"0.8×8=6.4이고 6.75-6.4=0.35 L입니다.",null],["어느 수를 0.75로 나눈 몫을 반올림하여 소수 첫째 자리까지 나타내니 6.4였습니다. 다음 중 원래 수가 될 수 있는 것은?",["4.2","4.8","5.4","6.4"],1,"4.8÷0.75=6.4이므로 조건을 만족합니다.",null]];
+let canvas=document.getElementById('c'),ctx=canvas.getContext('2d'),W,H,cell=22;
+let snake=[],dir={x:1,y:0},nextDir={x:1,y:0},foods=[],goldFoods=[],orb={},score=0,combo=0,correct=0,hp=3,running=false,paused=false,last=0,step=115,inv=0,qIndex=0,answered=false,particles=[],monsters=[],obstacles=[],eaten=0,monsterClock=0;
+let best=Number(localStorage.getItem('mathSnakeBest63')||0);
+let nextFoodMult=1, frenzyUntil=0, magnetUntil=0, shield=0;
+function resize(){let r=document.getElementById('stage').getBoundingClientRect();canvas.width=W=Math.floor(r.width);canvas.height=H=Math.floor(r.height);cell=Math.max(18,Math.min(26,Math.floor(Math.min(W/28,H/20))));}
+addEventListener('resize',resize);resize();
+function randPos(){let cols=Math.floor(W/cell),rows=Math.floor(H/cell);return{x:Math.floor(Math.random()*cols),y:Math.floor(Math.random()*rows)}}
+function same(a,b){return a.x==b.x&&a.y==b.y}
+function occupied(p){return snake.some(s=>same(s,p))||obstacles.some(o=>same(o,p))||monsters.some(m=>same(m,p))}
+function freePos(){let p,n=0;do{p=randPos();n++}while((occupied(p)||foods.some(f=>same(f,p))||goldFoods.some(f=>same(f,p))||same(orb,p))&&n<200);return p}
+function fillFoods(){while(foods.length<7)foods.push(freePos())}
+function spawnOrb(){orb=freePos()}
+function addObstacle(n=1){for(let i=0;i<n;i++){let p=freePos();if(Math.abs(p.x-snake[0].x)+Math.abs(p.y-snake[0].y)>6)obstacles.push(p)}}
+function addMonster(){if(monsters.length>=3)return;let p=freePos();monsters.push({x:p.x,y:p.y,t:0})}
+function start(){document.getElementById('intro').style.display='none';ensureBGM();restart(false)}
+function restart(hide=true){document.getElementById('gameover').style.display='none';score=combo=correct=eaten=0;hp=3;qIndex=0;step=115;inv=0;monsterClock=0;nextFoodMult=1;frenzyUntil=0;magnetUntil=0;shield=0;foods=[];goldFoods=[];monsters=[];obstacles=[];snake=[{x:8,y:8},{x:7,y:8},{x:6,y:8},{x:5,y:8}];dir=nextDir={x:1,y:0};fillFoods();spawnOrb();running=true;paused=false;updateHud();last=performance.now();requestAnimationFrame(loop)}
+function skinInfo(){
+ if(score>=200000)return['♾️ 초월자 · 무한신 지렁이','infinite',200000];
+ if(score>=140000)return['👁️ 차원지배자 지렁이','dimension',140000];
+ if(score>=95000)return['🌌 다중우주신 지렁이','multiverse',95000];
+ if(score>=65000)return['🪐 우주신 지렁이','cosmic',65000];
+ if(score>=45000)return['☀️ 절대신 지렁이','absolute',45000];
+ if(score>=30000)return['⚡ 신 지렁이','god',30000];
+ if(score>=18000)return['✨ 전설의 용사 지렁이','hero',18000];
+ if(score>=10000)return['🛡️ 풀플레이트 기사 지렁이','knight',10000];
+ if(score>=5000)return['⚔️ 철투구 병사 지렁이','soldier',5000];
+ if(score>=2000)return['🗺️ 가죽모자 모험가 지렁이','adventurer',2000];
+ return['🧢 누더기모자 견습 지렁이','apprentice',0]
+}
+function nextEvolution(){
+ let stages=[[2000,'가죽모자 모험가'],[5000,'철투구 병사'],[10000,'풀플레이트 기사'],[18000,'전설의 용사'],[30000,'신 지렁이'],[45000,'절대신'],[65000,'우주신'],[95000,'다중우주신'],[140000,'차원지배자'],[200000,'초월자 · 무한신']];
+ for(let a of stages)if(score<a[0])return a;return null
+}
+function updateHud(){
+ len.textContent=snake.length;document.getElementById('score').textContent=score;document.getElementById('combo').textContent=combo;
+ document.getElementById('correct').textContent=correct;document.getElementById('hp').textContent=hp;prog.style.width=(correct/30*100)+'%';
+ bestTag.textContent=Math.max(best,score);skinTag.textContent=skinInfo()[0];
+ let n=nextEvolution(); skinTag.title=n?`다음 진화 ${n[0]-score}점 남음`:'최종 진화 완료!'
+}
+function sfx(note=84,dur=.08){if(audioCtx)tone(note,dur,'square',.08,audioCtx.currentTime)}
+function toast(t){let e=document.getElementById('toast');e.textContent=t;e.style.opacity=1;setTimeout(()=>e.style.opacity=0,900)}
+function burst(x,y,n=18){for(let i=0;i<n;i++)particles.push({x:(x+.5)*cell,y:(y+.5)*cell,vx:(Math.random()-.5)*5,vy:(Math.random()-.5)*5,a:1})}
+function hit(){if(inv>0)return;if(shield>0){shield--;inv=1800;toast('🛡️ 보호막이 충돌을 막았다!');return}hp--;combo=0;inv=4200;toast('💥 충돌! ❤️ -1 · 4초 무적!');if(hp<=0){gameOver();return}snake=[{x:8,y:8},{x:7,y:8},{x:6,y:8},{x:5,y:8}];dir=nextDir={x:1,y:0};updateHud()}
+function moveMonsters(){
+ monsterClock++; if(monsterClock%3!==0)return; // 뱀보다 훨씬 느리게
+ monsters.forEach(m=>{
+   let h=snake[0],dx=Math.sign(h.x-m.x),dy=Math.sign(h.y-m.y);
+   let cand=Math.abs(h.x-m.x)>Math.abs(h.y-m.y)?{x:m.x+dx,y:m.y}:{x:m.x,y:m.y+dy};
+   let cols=Math.floor(W/cell),rows=Math.floor(H/cell);
+   if(cand.x>=0&&cand.y>=0&&cand.x<cols&&cand.y<rows&&!obstacles.some(o=>same(o,cand))) {m.x=cand.x;m.y=cand.y}
+ });
+}
+function tick(){let oldStage=skinInfo()[1];dir=nextDir;let h={x:snake[0].x+dir.x,y:snake[0].y+dir.y},cols=Math.floor(W/cell),rows=Math.floor(H/cell);
+if(h.x<0||h.y<0||h.x>=cols||h.y>=rows||snake.some((s,i)=>i>1&&same(s,h))||obstacles.some(o=>same(o,h))){hit();return}
+snake.unshift(h);let grow=false;
+let fi=foods.findIndex(f=>same(f,h));if(fi>=0){foods.splice(fi,1);eaten++;sfx(84,.045);let foodGain=120*(1+Math.min(combo,5))*nextFoodMult;score+=foodGain;
+if(nextFoodMult>1){toast('💥 x5 먹이! +'+foodGain);nextFoodMult=1}
+burst(h.x,h.y);grow=true;fillFoods();if(eaten%7==0)spawnOrb();if(eaten%12==0&&correct>=5)addObstacle();if(eaten%18==0&&correct>=8)addMonster();if(snake.length%6==0)step=Math.max(68,step-4)}
+let gi=goldFoods.findIndex(f=>same(f,h));if(gi>=0){goldFoods.splice(gi,1);sfx(91,.08);score+=650;burst(h.x,h.y,28);grow=true;toast('🌟 황금먹이 +650!')}
+if(!grow)snake.pop();
+if(same(h,orb)){spawnOrb();openQuiz(false)}
+moveMonsters();
+if(performance.now()<magnetUntil&&goldFoods.length){
+ let h0=snake[0];goldFoods.forEach(g=>{if(Math.abs(g.x-h0.x)+Math.abs(g.y-h0.y)<7){if(Math.abs(g.x-h0.x)>Math.abs(g.y-h0.y))g.x+=Math.sign(h0.x-g.x);else g.y+=Math.sign(h0.y-g.y)}})
+}
+if(monsters.some(m=>same(m,snake[0])))hit();
+let newStage=skinInfo();if(newStage[1]!==oldStage)evolutionFlash(newStage[0]);updateHud()}
+function loop(t){if(!running)return;if(!paused&&t-last>(performance.now()<frenzyUntil?step/2:step)){tick();last=t}draw();requestAnimationFrame(loop)}
+function snakeColor(i){
+ let mode=skinInfo()[1],t=performance.now();
+ if(mode=='infinite')return `hsl(${(i*37+t/3)%360} 100% 82%)`;
+ if(mode=='dimension')return i%2?`hsl(${(t/8+i*45)%360} 100% 68%)`:'#090018';
+ if(mode=='multiverse')return i%3==0?'#ffffff':`hsl(${(i*55+t/12)%360} 95% 65%)`;
+ if(mode=='cosmic')return i%2?'#4b2b9e':'#1b82d1';
+ if(mode=='absolute')return i==0?'#fffbd1':(i%2?'#ffcf3a':'#fff0a0');
+ if(mode=='god')return `hsl(${(i*24+t/7)%360} 100% 72%)`;
+ if(mode=='hero')return i==0?'#ffe68a':(i%2?'#7b48ff':'#d14cff');
+ if(mode=='knight')return i==0?'#f5f7ff':(i%2?'#8e9baa':'#c9d1da');
+ if(mode=='soldier')return i==0?'#d9e2e8':'#647785';
+ if(mode=='adventurer')return i==0?'#ffd09a':'#5bb66d';
+ return i==0?'#b8ef7c':'#5f9d55'
+}
+function drawHeadGear(h){
+ let mode=skinInfo()[1],x=(h.x+.5)*cell,y=(h.y+.5)*cell,t=performance.now();
+ ctx.save();ctx.textAlign='center';ctx.textBaseline='middle';
+ if(mode=='apprentice'){
+   ctx.font=(cell*.72)+'px sans-serif';ctx.fillText('🧢',x,y-cell*.42);
+ }else if(mode=='adventurer'){
+   ctx.font=(cell*.72)+'px sans-serif';ctx.fillText('🤠',x,y-cell*.43);
+ }else if(mode=='soldier'){
+   ctx.font=(cell*.72)+'px sans-serif';ctx.fillText('⛑️',x,y-cell*.43);
+ }else if(mode=='knight'){
+   ctx.font=(cell*.72)+'px sans-serif';ctx.fillText('🪖',x,y-cell*.43);
+   ctx.strokeStyle='#dbe8ff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,cell*.55,0,Math.PI*2);ctx.stroke();
+ }else if(mode=='hero'){
+   ctx.shadowBlur=12;ctx.shadowColor='#e18cff';ctx.strokeStyle='#ffd75e';ctx.lineWidth=2;
+   ctx.beginPath();ctx.arc(x,y,cell*.62,0,Math.PI*2);ctx.stroke();
+   ctx.font=(cell*.62)+'px sans-serif';ctx.fillText('👑',x,y-cell*.48);
+   ctx.font=(cell*.38)+'px sans-serif';ctx.fillText('✦',x+Math.sin(t/180)*cell*.7,y-cell*.15);
+ }else if(mode=='absolute'){
+   ctx.shadowBlur=22;ctx.shadowColor='#ffd54a';ctx.strokeStyle='#fff4a3';ctx.lineWidth=4;ctx.beginPath();ctx.arc(x,y,cell*.72,0,Math.PI*2);ctx.stroke();
+   ctx.font=(cell*.62)+'px sans-serif';ctx.fillText('☀️',x,y-cell*.52);
+ }else if(mode=='cosmic'){
+   ctx.shadowBlur=24;ctx.shadowColor='#6d8cff';ctx.strokeStyle='#9bd6ff';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(x,y,cell*.9,cell*.34,t/900,0,Math.PI*2);ctx.stroke();
+   ctx.font=(cell*.62)+'px sans-serif';ctx.fillText('🪐',x,y-cell*.5);
+ }else if(mode=='multiverse'){
+   ctx.shadowBlur=28;ctx.shadowColor='#e05cff';for(let k=0;k<3;k++){ctx.strokeStyle=`hsl(${t/8+k*120} 100% 70%)`;ctx.beginPath();ctx.arc(x,y,cell*(.55+k*.16),0,Math.PI*2);ctx.stroke()}
+   ctx.font=(cell*.58)+'px sans-serif';ctx.fillText('🌌',x,y-cell*.52);
+ }else if(mode=='dimension'){
+   ctx.shadowBlur=30;ctx.shadowColor='#ff4dff';ctx.strokeStyle='#7ffcff';ctx.lineWidth=3;ctx.strokeRect(x-cell*.65,y-cell*.65,cell*1.3,cell*1.3);
+   ctx.save();ctx.translate(x,y);ctx.rotate(t/700);ctx.strokeStyle='#ff69ff';ctx.strokeRect(-cell*.52,-cell*.52,cell*1.04,cell*1.04);ctx.restore();
+   ctx.font=(cell*.58)+'px sans-serif';ctx.fillText('👁️',x,y-cell*.52);
+ }else if(mode=='infinite'){
+   ctx.shadowBlur=35;ctx.shadowColor='#ffffff';ctx.lineWidth=4;ctx.strokeStyle=`hsl(${t/4%360} 100% 75%)`;ctx.beginPath();ctx.arc(x,y,cell*.88,0,Math.PI*2);ctx.stroke();
+   ctx.font=(cell*.7)+'px sans-serif';ctx.fillText('♾️',x,y-cell*.54);
+ }else if(mode=='god'){
+   ctx.shadowBlur=18;ctx.shadowColor='#ffffff';ctx.strokeStyle=`hsl(${t/6%360} 100% 70%)`;ctx.lineWidth=3;
+   ctx.beginPath();ctx.arc(x,y,cell*(.68+.05*Math.sin(t/120)),0,Math.PI*2);ctx.stroke();
+   ctx.font=(cell*.65)+'px sans-serif';ctx.fillText('⚡',x,y-cell*.5);
+   ctx.font=(cell*.34)+'px sans-serif';
+   for(let k=0;k<4;k++){let a=t/500+k*Math.PI/2;ctx.fillText('✦',x+Math.cos(a)*cell*.82,y+Math.sin(a)*cell*.82)}
+ }
+ ctx.restore()
+}
+function evolutionFlash(name){
+ sfx(96,.18);setTimeout(()=>sfx(100,.18),110);setTimeout(()=>sfx(103,.25),220);
+ toast('🌟 진화! '+name+' 🌟');
+ for(let k=0;k<8;k++){let p=snake[0];burst(p.x,p.y,18)}
+}
+function draw(){ctx.clearRect(0,0,W,H);ctx.strokeStyle='#112b3c';ctx.lineWidth=1;for(let x=0;x<W;x+=cell){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}for(let y=0;y<H;y+=cell){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+foods.forEach(f=>drawCell(f,'#ff5864','🍎'));goldFoods.forEach(f=>drawCell(f,'#ffd84d','🌟'));let pulse=.72+.28*Math.sin(performance.now()/150);ctx.globalAlpha=pulse;drawCell(orb,'#73d8ff','🧠');ctx.globalAlpha=1;
+obstacles.forEach(o=>{ctx.fillStyle='#586574';ctx.fillRect(o.x*cell+2,o.y*cell+2,cell-4,cell-4);ctx.font=(cell*.62)+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🧱',(o.x+.5)*cell,(o.y+.52)*cell)});
+monsters.forEach(m=>drawCell(m,'#9b58ff','👻'));
+snake.forEach((s,i)=>{ctx.fillStyle=snakeColor(i);ctx.fillRect(s.x*cell+2,s.y*cell+2,cell-4,cell-4);if(i==0){ctx.fillStyle='#06100a';let ex=s.x*cell+cell*.68,ey=s.y*cell+cell*.34;ctx.fillRect(ex,ey,3,3)}})
+if(snake.length)drawHeadGear(snake[0]);
+if(inv>0){inv-=16;ctx.fillStyle='#ffffff18';ctx.fillRect(0,0,W,H)}
+particles=particles.filter(p=>p.a>0);particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.a-=.035;ctx.globalAlpha=p.a;ctx.fillStyle='#ffe36b';ctx.fillRect(p.x,p.y,4,4)});ctx.globalAlpha=1}
+function drawCell(p,col,emoji){ctx.fillStyle=col;ctx.beginPath();ctx.arc((p.x+.5)*cell,(p.y+.5)*cell,cell*.38,0,Math.PI*2);ctx.fill();ctx.font=(cell*.65)+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(emoji,(p.x+.5)*cell,(p.y+.52)*cell)}
+
+const DEX=[
+ {min:0,name:'누더기모자 견습 지렁이',icon:'🧢'},
+ {min:2000,name:'가죽모자 모험가 지렁이',icon:'🤠'},
+ {min:5000,name:'철투구 병사 지렁이',icon:'⛑️'},
+ {min:10000,name:'풀플레이트 기사 지렁이',icon:'🛡️'},
+ {min:18000,name:'전설의 용사 지렁이',icon:'👑'},
+ {min:30000,name:'신 지렁이',icon:'⚡'},
+ {min:45000,name:'절대신 지렁이',icon:'☀️'},
+ {min:65000,name:'우주신 지렁이',icon:'🪐'},
+ {min:95000,name:'다중우주신 지렁이',icon:'🌌'},
+ {min:140000,name:'차원지배자 지렁이',icon:'👁️'},
+ {min:200000,name:'초월자 · 무한신 지렁이',icon:'♾️'}
+];
+function openDex(){
+ let was=paused; paused=true; document.getElementById('dex').dataset.was=was?'1':'0';
+ let list=document.getElementById('dexList');list.innerHTML='';
+ let unlocked=0,current=0;
+ DEX.forEach((d,i)=>{
+   let open=best>=d.min || score>=d.min;
+   if(open){unlocked++;current=i}
+   let secret=i>5&&!open;
+   let row=document.createElement('div');row.className='dexrow '+(!open?'locked ':'')+(open&&i==current?'current':'');
+   let shownName=secret?'??? 지렁이':d.name;
+   let shownIcon=secret?'?':d.icon;
+   let hint=secret?'외형 미확인 · 직접 진화해서 해금':(open?(i==current?'현재 도달 단계':'해금 완료'):'아직 잠겨 있음');
+   row.innerHTML=`<div class="dexicon">${shownIcon}</div><div><div class="dexname">${shownName}</div><div class="dexscore">${d.min.toLocaleString()}점 · ${hint}</div></div>`;
+   list.appendChild(row)
+ });
+ dexProgress.textContent=`🏆 최고 기록 ${Math.max(best,score).toLocaleString()}점 · 도감 ${unlocked}/${DEX.length} 해금`;
+ document.getElementById('dex').style.display='flex'
+}
+function closeDex(){document.getElementById('dex').style.display='none';paused=document.getElementById('dex').dataset.was==='1';last=performance.now()}
+function pauseToggle(){if(!running)return;paused=!paused;toast(paused?'⏸ 일시정지':'▶ 계속!')}
+
+const QVIS={
+ topA:{type:'top',grid:[[1,1,0],[1,1,1],[0,0,0]]},
+ heightA:{type:'height',grid:[[2,1,0],[3,2,2],[0,0,0]]},
+ heightB:{type:'height',grid:[[1,2,0],[1,3,2],[0,0,0]]},
+ heightC:{type:'height',grid:[[1,2,2],[3,3,1],[0,0,0]]},
+ frontA:{type:'bars',label:'앞에서 본 모양',vals:[2,3,1]},
+ sideA:{type:'bars',label:'오른쪽에서 본 모양',vals:[1,3,2]},
+ layersA:{type:'layers',layers:[
+   [[1,1,1],[1,1,1]],
+   [[1,1,0],[0,1,0]],
+   [[1,0,0],[0,1,0]]
+ ]}
+};
+function gridHTML(grid,height=false){
+ let rows=grid.length,cols=Math.max(...grid.map(r=>r.length));
+ let h=`<div class="cubeView" style="grid-template-columns:repeat(${cols},34px)">`;
+ for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){let v=(grid[r]||[])[c]||0;h+=`<div class="cubeCell ${v?(height?'heightOn':'cubeOn'):''}">${height&&v?v:''}</div>`}
+ return h+'</div>'
+}
+function barsHTML(vals,label){
+ let max=Math.max(...vals),grid=[];
+ for(let r=max;r>=1;r--)grid.push(vals.map(v=>v>=r?1:0));
+ return `<div class="viewLabel">${label}</div>`+gridHTML(grid,false)
+}
+function renderQVisual(key){
+ let box=document.getElementById('qvisual'),v=QVIS[key];if(!v){box.style.display='none';box.innerHTML='';return}
+ box.style.display='block';
+ if(v.type==='top')box.innerHTML='<div class="viewLabel">위에서 본 모양</div>'+gridHTML(v.grid,false);
+ if(v.type==='height')box.innerHTML='<div class="viewLabel">위에서 본 모양에 각 위치의 높이를 수로 나타냄</div>'+gridHTML(v.grid,true);
+ if(v.type==='bars')box.innerHTML=barsHTML(v.vals,v.label);
+ if(v.type==='layers'){box.innerHTML='<div class="miniViews">'+v.layers.map((g,i)=>`<div><div class="viewLabel">${i+1}층</div>${gridHTML(g,false)}</div>`).join('')+'</div>'}
+}
+function openQuiz(manual){if(document.getElementById('quiz').style.display=='flex')return;paused=true;answered=false;let q=QUESTIONS[qIndex%QUESTIONS.length];qno.textContent=`${Math.min(qIndex+1,30)} / 30`;renderQVisual(q[4]);qtext.textContent=q[0].replace('[그림] ','');opts.innerHTML='';feedback.style.display='none';next.style.display='none';
+q[1].forEach((o,i)=>{let b=document.createElement('button');b.textContent=(i+1)+'. '+o;b.onclick=()=>answer(i,q);opts.appendChild(b)});document.getElementById('quiz').style.display='flex'}
+function appleRain(n=16){
+ for(let i=0;i<n;i++)foods.push(freePos());
+ toast('🍎🍎 사과 무더기 출현!')
+}
+function giveQuizBonus(){
+ let r=Math.random();
+ if(r<.24){nextFoodMult=5;return '🍎 다음에 먹는 사과 점수 ×5'}
+ if(r<.46){appleRain(18);return '🌧️ 사과 무더기 18개 생성'}
+ if(r<.64){shield++;return '🛡️ 충돌 1회 방어 보호막'}
+ if(r<.80){magnetUntil=performance.now()+10000;return '🧲 10초 황금먹이 자석'}
+ if(r<.92){for(let k=0;k<7;k++)goldFoods.push(freePos());return '🌟 황금먹이 7개 출현'}
+ score+=2500;return '💰 즉시 보너스 +2,500점'
+}
+function wrongPenalty(){
+ let r=Math.random();
+ if(r<.55){frenzyUntil=performance.now()+6500;return '😵 6.5초 동안 속도 2배!'}
+ if(r<.78){addObstacle(3);return '🧱 장애물 3개 추가!'}
+ if(r<.92&&monsters.length<3){addMonster();return '👻 추격 몬스터 1마리 출현!'}
+ combo=0;return '💨 콤보 초기화!'
+}
+function answer(i,q){if(answered)return;answered=true;let oldEvo=skinInfo()[1];feedback.style.display='block';if(i==q[2]){sfx(88,.12);setTimeout(()=>sfx(95,.15),100);correct++;combo++;score+=1500+combo*300;inv=5000;
+for(let k=0;k<4;k++)goldFoods.push(freePos());for(let k=0;k<2;k++)snake.push({...snake[snake.length-1]});
+toast('⚡ 정답 POWER UP! 🌟×4');
+let bonus=giveQuizBonus();
+feedback.innerHTML='✅ <b>정답!</b> '+q[3]+'<br>🎁 기본: <b>+1500점 이상 · 몸길이 +2 · 황금먹이 4개 · 무적 5초</b><br>🎰 랜덤 보너스: <b>'+bonus+'</b>';feedback.style.color='#8dffac';for(let k=0;k<5;k++){let p=randPos();burst(p.x,p.y,16)}}else{sfx(52,.18);combo=0;let pen=wrongPenalty();feedback.innerHTML='❌ <b>아쉽다!</b> '+q[3]+'<br>☠️ 오답 페널티: <b>'+pen+'</b><br>버티면 다시 정상으로 돌아옵니다.';feedback.style.color='#ffaaaa'}qIndex++;let nowEvo=skinInfo();if(nowEvo[1]!==oldEvo)evolutionFlash(nowEvo[0]);next.style.display='block';updateHud()}
+function closeQuiz(){document.getElementById('quiz').style.display='none';paused=false;last=performance.now();if(correct>=30)toast('🏆 30문제 정복! 계속 최고점에 도전!')}
+function gameOver(){running=false;if(score>best){best=score;localStorage.setItem('mathSnakeBest63',best);overTitle.textContent='🏆 신기록!'}else overTitle.textContent='💥 게임 오버';os.textContent=score;ol.textContent=snake.length;oc.textContent=correct+'/30';updateHud();document.getElementById('gameover').style.display='flex'}
+
+// --- 세인쌤 수학 스네이크 오리지널 칩튠 BGM ---
+// 외부 음원 파일 없이 Web Audio로 즉석 생성. 유명 게임 음악을 복제하지 않은 짧은 아케이드풍 루프.
+let audioCtx=null,bgmOn=true,bgmTimer=null,bgmStep=0,bgmGain=null;
+const MELODY=[
+  76,79,81,79,76,74,72,74, 76,79,83,81,79,76,74,71,
+  72,76,79,76,74,72,71,67, 69,72,76,74,72,71,69,71
+];
+const BASS=[
+  48,48,55,55,45,45,52,52, 48,48,55,55,43,43,50,50,
+  45,45,52,52,41,41,48,48, 43,43,50,50,45,45,47,47
+];
+function hz(n){return 440*Math.pow(2,(n-69)/12)}
+function tone(note,dur,type='square',vol=.05,when=0){
+ if(!audioCtx||!bgmGain)return;
+ let o=audioCtx.createOscillator(),g=audioCtx.createGain();
+ o.type=type;o.frequency.value=hz(note);g.gain.setValueAtTime(vol,when);
+ g.gain.exponentialRampToValueAtTime(.001,when+dur);
+ o.connect(g);g.connect(bgmGain);o.start(when);o.stop(when+dur)
+}
+function scheduleBeat(){
+ if(!bgmOn||!audioCtx)return;
+ let now=audioCtx.currentTime+.03,i=bgmStep%MELODY.length;
+ tone(MELODY[i],.14,'square',.055,now);
+ if(i%2==0)tone(BASS[i],.26,'triangle',.07,now);
+ if(i%4==0){tone(36,.055,'square',.018,now)}
+ bgmStep++;bgmTimer=setTimeout(scheduleBeat,165)
+}
+function ensureBGM(){
+ if(!bgmOn)return;
+ if(!audioCtx){audioCtx=new (window.AudioContext||window.webkitAudioContext)();bgmGain=audioCtx.createGain();bgmGain.gain.value=.22;bgmGain.connect(audioCtx.destination)}
+ if(audioCtx.state==='suspended')audioCtx.resume();
+ if(!bgmTimer)scheduleBeat()
+}
+function toggleBGM(){
+ bgmOn=!bgmOn;bgmBtn.textContent=bgmOn?'🎵 BGM ON':'🔇 BGM OFF';
+ if(bgmOn){ensureBGM()}else{clearTimeout(bgmTimer);bgmTimer=null}
+}
+addEventListener('keydown',e=>{let k=e.key.toLowerCase(),d=null;if(k=='arrowup'||k=='w')d={x:0,y:-1};if(k=='arrowdown'||k=='s')d={x:0,y:1};if(k=='arrowleft'||k=='a')d={x:-1,y:0};if(k=='arrowright'||k=='d')d={x:1,y:0};if(d&&!(d.x==-dir.x&&d.y==-dir.y)){nextDir=d;e.preventDefault()}if(k==' ')pauseToggle()});
+const touchPad=document.getElementById('touchPad'),joyKnob=document.getElementById('joyKnob'),touchQuiz=document.getElementById('touchQuiz');let joyPointer=null,swipeStart=null;
+function touchDir(dx,dy){let d=Math.abs(dx)>Math.abs(dy)?{x:dx>0?1:-1,y:0}:{x:0,y:dy>0?1:-1};if(!(d.x==-dir.x&&d.y==-dir.y))nextDir=d}
+function joyMove(e){if(joyPointer!==e.pointerId)return;let r=touchPad.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2,dx=e.clientX-cx,dy=e.clientY-cy,max=r.width*.3,z=Math.hypot(dx,dy)||1;if(z>max){dx=dx/z*max;dy=dy/z*max}joyKnob.style.transform=`translate(${dx}px,${dy}px)`;if(Math.hypot(dx,dy)>16)touchDir(dx,dy);e.preventDefault()}
+touchPad.addEventListener('pointerdown',e=>{joyPointer=e.pointerId;touchPad.setPointerCapture(e.pointerId);joyMove(e);ensureBGM()});touchPad.addEventListener('pointermove',joyMove);function joyUp(e){if(joyPointer!==e.pointerId)return;joyPointer=null;joyKnob.style.transform='translate(0,0)'}touchPad.addEventListener('pointerup',joyUp);touchPad.addEventListener('pointercancel',joyUp);
+touchQuiz.addEventListener('pointerdown',e=>{e.preventDefault();ensureBGM();openQuiz(true)});
+canvas.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'){swipeStart={x:e.clientX,y:e.clientY};e.preventDefault()}});canvas.addEventListener('pointerup',e=>{if(!swipeStart)return;let dx=e.clientX-swipeStart.x,dy=e.clientY-swipeStart.y;swipeStart=null;if(Math.hypot(dx,dy)>24)touchDir(dx,dy);e.preventDefault()});</script></body></html>
