@@ -65,11 +65,40 @@
   .pl.hidden{visibility:hidden}
   .pl.top{background:var(--yellow); color:var(--ink); font-size:42px; padding:22px; box-shadow:0 0 40px rgba(255,201,40,.6)}
   @keyframes in{from{opacity:0; transform:translateY(20px) scale(.95)}}
-  .stage-ctl{position:absolute; bottom:20px; display:flex; gap:10px}
+  .stage-ctl{position:absolute; bottom:20px; display:flex; gap:10px; z-index:3}
+  #stage{overflow:hidden; text-align:center}
+  #stage > *{position:relative; z-index:2}
+  #stage .stage-ctl{position:absolute}
+  #stage.won h1{display:none} #stage.won .slogo{width:96px; height:96px}
+  #stage .spot{position:absolute; z-index:1; top:-20%; width:46vw; height:150%; opacity:0; transition:opacity .6s;
+    background:linear-gradient(to bottom, rgba(255,240,180,.55), rgba(255,240,180,0) 75%); clip-path:polygon(45% 0,55% 0,100% 100%,0 100%)}
+  #stage .spot.l{left:2vw; transform-origin:50% 0; animation:swing 2.2s ease-in-out infinite alternate}
+  #stage .spot.r{right:2vw; transform-origin:50% 0; animation:swing 2.2s ease-in-out infinite alternate-reverse}
+  #stage.lit .spot{opacity:1}
+  @keyframes swing{from{transform:rotate(-24deg)} to{transform:rotate(24deg)}}
+  .sc{min-height:260px; display:flex; flex-direction:column; align-items:center; justify-content:center; width:min(1000px,100%)}
+  .sc-msg{font-family:"Jua",sans-serif; font-size:56px; line-height:1.25; animation:zoom .5s both}
+  .sc-msg small{display:block; font-size:28px; opacity:.8}
+  @keyframes zoom{from{opacity:0; transform:scale(.4)} 70%{transform:scale(1.08)}}
+  .cnt{font-family:"Jua",sans-serif; font-size:200px; line-height:1; color:var(--yellow); text-shadow:0 0 40px rgba(255,201,40,.7); animation:cnt .8s both}
+  @keyframes cnt{from{opacity:0; transform:scale(2.4)} 40%{opacity:1; transform:scale(1)} to{opacity:.2; transform:scale(.8)}}
+  .roul{font-family:"Jua",sans-serif; font-size:84px; padding:26px 60px; border-radius:28px; background:#4a4e57; border:6px dashed var(--yellow); min-width:60%}
+  .shake{animation:shake .12s infinite}
+  @keyframes shake{25%{transform:translate(-4px,2px)} 50%{transform:translate(3px,-3px)} 75%{transform:translate(-2px,-2px)}}
+  .win{background:var(--yellow); color:var(--ink); border-radius:32px; padding:24px 70px 30px; box-shadow:0 0 80px rgba(255,201,40,.8); animation:winpop .9s cubic-bezier(.2,1.6,.4,1) both}
+  .win .crown{font-size:90px; line-height:1; animation:bob2 1.2s ease-in-out infinite}
+  .win .lbl{font-family:"Jua",sans-serif; font-size:34px; color:#b06d00}
+  .win .wn{font-family:"Jua",sans-serif; font-size:96px; line-height:1.1}
+  .win .wt{font-size:28px; margin-top:4px}
+  .congrats{font-family:"Jua",sans-serif; font-size:48px; margin-top:20px; animation:zoom .6s .6s both}
+  @keyframes winpop{from{transform:scale(0) rotate(-12deg)}}
+  @keyframes bob2{50%{transform:translateY(-10px) rotate(6deg)}}
   .hlogo{width:40px; height:40px; flex:none; background:var(--logo) center/contain no-repeat}
   .slogo{width:150px; height:150px; margin-bottom:10px; background:var(--logo) center/contain no-repeat}
   nav #bgm.on{background:#ff7aa8; color:#fff}
   .stage-ctl .btn:disabled{opacity:.5}
+  .hideBox{text-align:center; padding:40px 16px; border:3px dashed var(--line); border-radius:16px; background:#fffdf6}
+  .big2{font-family:"Jua",sans-serif; font-size:24px; margin:6px 0}
   #fx{position:fixed; inset:0; pointer-events:none; z-index:11}
 </style>
 </head>
@@ -110,6 +139,7 @@ const votesCol = collection(db, "psa_rating", CONTEST_ID, "votes");
 const app = document.getElementById("app");
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
+let showTable = false, tableArm = false;   // 순위표는 버튼을 눌러야 보여요 (전자칠판 보호)
 let C = null, votes = [], claims = [], tab = "run", metric = "sum", resetArm = false, releaseArm = null;
 const claimsCol = collection(db, "psa_rating", CONTEST_ID, "claims");
 
@@ -121,7 +151,7 @@ onSnapshot(votesCol, s => { votes = s.docs.map(d => d.data()); if (tab !== "setu
 onSnapshot(claimsCol, s => { claims = s.docs.map(d => ({ name: d.id, device: d.data().device })); if (tab !== "setup") render(); });
 
 document.querySelectorAll("nav button[data-tab]").forEach(b => b.onclick = () => {
-  tab = b.dataset.tab; resetArm = false;
+  tab = b.dataset.tab; resetArm = false; showTable = false; tableArm = false;
   document.querySelectorAll("nav button[data-tab]").forEach(x => x.classList.toggle("on", x === b)); render();
 });
 
@@ -149,7 +179,11 @@ function render(){
 function renderRun(){
   const students = C.students || [];
   const cur = (C.teams || []).find(t => t.id === C.current);
-  let live = `<p class="muted">아래에서 팀을 누르면 학생 태블릿에 그 팀 평가지가 열려요.</p>`;
+  let live = C.current === "__done__"
+    ? `<div class="live-head"><h2 style="margin:0">🏁 모든 평가 끝!</h2><button class="btn gray" id="undone">평가 다시 열기</button></div>
+       <p class="muted">학생 화면에 "모든 평가가 끝났어요! 1위는 누구일까요?"가 떠 있어요. <b>결과 → 🏆 발표 화면</b>으로 가세요.</p>`
+    : `<div class="live-head"><p class="muted" style="margin:0;flex:1">아래에서 팀을 누르면 학생 태블릿에 그 팀 평가지가 열려요.</p>
+       <button class="btn yellow" id="finish">🏁 모든 평가 끝내기</button></div>`;
   if (cur) {
     const done = new Set(votes.filter(v => v.team === cur.id).map(v => v.student));
     const n = students.filter(s => done.has(s)).length;
@@ -180,6 +214,8 @@ function renderRun(){
     }).join("")}</div>${students.length ? "" : `<p style="color:var(--red)">⚠️ 설정 탭에서 학생 명단을 먼저 입력해 주세요.</p>`}</div>`;
   app.querySelectorAll(".team").forEach(b => b.onclick = () => updateDoc(contestRef, { current: b.dataset.id }));
   document.getElementById("close")?.addEventListener("click", () => updateDoc(contestRef, { current: null }));
+  document.getElementById("finish")?.addEventListener("click", () => updateDoc(contestRef, { current: "__done__" }));
+  document.getElementById("undone")?.addEventListener("click", () => updateDoc(contestRef, { current: null }));
   document.getElementById("claimToggle").onclick = () => updateDoc(contestRef, { claimOpen: !C.claimOpen });
   app.querySelectorAll(".who span[data-n]").forEach(el => el.onclick = async () => {
     const n = el.dataset.n; if (!cmap.has(n)) return;
@@ -206,12 +242,21 @@ function renderResult(){
       <div class="row" style="margin:0"><span class="muted">순위 기준</span>
         <div class="seg"><button data-m="sum" class="${metric === "sum" ? "on" : ""}">합계</button><button data-m="avg" class="${metric === "avg" ? "on" : ""}">평균</button></div>
         <button class="btn yellow" id="show">🏆 발표 화면</button></div></div>
+    ${showTable ? `<div class="row" style="margin:0 0 10px"><button class="btn gray" id="hideT">🙈 순위표 숨기기</button></div>
     <table><tr><th>순위</th><th style="text-align:left">팀</th><th>평가 인원</th>${items.map(i => `<th>${esc(i)}<br>(평균)</th>`).join("")}<th>합계</th><th>평균<br>(15점 만점)</th></tr>
     ${rows.map(r => `<tr class="${r.rank === 1 && r.n ? "first" : ""}"><td>${r.rank === 1 && r.n ? "🥇" : r.rank}</td><td class="name">${esc(r.name)}</td>
-      <td>${r.n}${total ? ` / ${total}` : ""}</td>${r.per.map(p => `<td>${fmt(p)}</td>`).join("")}<td><b>${r.sum}</b></td><td><b>${fmt(r.avg)}</b></td></tr>`).join("")}</table>
+      <td>${r.n}${total ? ` / ${total}` : ""}</td>${r.per.map(p => `<td>${fmt(p)}</td>`).join("")}<td><b>${r.sum}</b></td><td><b>${fmt(r.avg)}</b></td></tr>`).join("")}</table>`
+    : `<div class="hideBox"><div style="font-size:54px">🙈</div><p class="big2">순위표가 가려져 있어요</p>
+        <p class="muted">전자칠판에 연결돼 있다면 학생들에게 보일 수 있어요.<br>버튼을 <b>두 번</b> 눌러야 펼쳐져요.</p>
+        <button class="btn ${tableArm ? "red" : "gray"}" id="showT">${tableArm ? "정말 펼칠까요? 한 번 더 누르기" : "👀 순위표 보기"}</button></div>`}
     <p class="muted" style="margin-top:12px">💡 팀마다 평가 인원이 다르면(결석·미제출) <b>합계</b>는 불공평해질 수 있어요. 그럴 땐 <b>평균</b>으로 보세요.</p></div>`;
   app.querySelectorAll(".seg button").forEach(b => b.onclick = () => { metric = b.dataset.m; render(); });
-  document.getElementById("show").onclick = openStage;
+  document.getElementById("show").onclick = () => { showTable = false; tableArm = false; openStage(); };
+  document.getElementById("hideT")?.addEventListener("click", () => { showTable = false; render(); });
+  document.getElementById("showT")?.addEventListener("click", () => {
+    if (!tableArm) { tableArm = true; render(); setTimeout(() => { if (tableArm && !showTable) { tableArm = false; render(); } }, 4000); return; }
+    tableArm = false; showTable = true; render();
+  });
 }
 
 function renderSetup(){
@@ -306,6 +351,20 @@ const SFX = {
     tone(65, end, .8, "sine", .9); noise(end, 2.4, .7, "highpass", 5000);
     for (let i = 0; i < 70; i++) noise(end + .3 + Math.random() * 2.6, .05, .08 + Math.random() * .12, "bandpass", 1500 + Math.random() * 2500);  // 박수
   },
+  riser(dur){              // 긴장감 올라가는 소리
+    const t = AC.currentTime, o = AC.createOscillator(), lp = AC.createBiquadFilter(), g = AC.createGain();
+    o.type = "sawtooth"; o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(900, t + dur);
+    lp.type = "lowpass"; lp.frequency.setValueAtTime(400, t); lp.frequency.exponentialRampToValueAtTime(4000, t + dur);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.12, t + dur); g.gain.exponentialRampToValueAtTime(.0001, t + dur + .15);
+    o.connect(lp); lp.connect(g); g.connect(OUT); o.start(t); o.stop(t + dur + .2);
+  },
+  boom(v){                  // 쿵!
+    const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain();
+    o.frequency.setValueAtTime(120, t); o.frequency.exponentialRampToValueAtTime(40, t + .4);
+    env(g, t, .9 * v, .005, .5); o.connect(g); g.connect(OUT); o.start(t); o.stop(t + .6);
+    noise(t, .15, .3 * v, "lowpass", 400);
+  },
+  tick(){ const t = AC.currentTime; tone(1400, t, .05, "square", .06); },
   chime(){ const t = AC.currentTime; [523, 784, 1047].forEach((f, i) => tone(f, t + i * .12, .6, "triangle", .2)); }
 };
 
@@ -331,39 +390,58 @@ function setBgm(on){
 }
 document.getElementById("bgm").onclick = () => setBgm(!bgmOn);
 
-/* ── 발표 화면: 꼴찌부터 한 팀씩 공개, 마지막에 1위 ── */
-let stageRows = [], shown = 0;
+/* ── 발표 화면: 1위만 공개 (호들갑 연출) ── */
+let stageRows = [], running = false;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 function openStage(){
   stageRows = stats().filter(r => r.n);
   if (!stageRows.length) { toast("아직 점수가 없어요"); return; }
-  shown = 0; setBgm(false); ac(); SFX.chime(); drawStage(); document.getElementById("stage").classList.add("show");
+  setBgm(false); ac(); SFX.chime();
+  const st = document.getElementById("stage");
+  st.className = "show";
+  st.innerHTML = `<div class="spot l"></div><div class="spot r"></div>
+    <div class="slogo"></div><h1>2026 산울광고팀 영상 시상식</h1>
+    <div class="sc" id="sc"><div class="sc-msg">🎬 최고의 공익광고는?<small>모두 앞을 봐 주세요!</small></div></div>
+    <div class="stage-ctl"><button class="btn yellow" id="go" style="font-size:24px;padding:14px 26px">🥁 1위 발표 시작!</button><button class="btn gray" id="exit">닫기</button></div>`;
+  document.getElementById("go").onclick = runShow;
+  document.getElementById("exit").onclick = () => { running = false; st.className = ""; };
 }
-function drawStage(){
-  const st = document.getElementById("stage"), N = stageRows.length;
-  const fmt = r => metric === "sum" ? `${r.sum}점` : `평균 ${(Math.round(r.avg * 100) / 100)}점`;
-  const allShown = shown >= N;
-  st.innerHTML = `<div class="slogo"></div><h1>${allShown ? "🎉 축하합니다! 🎉" : "2026 산울광고팀 영상 시상식"}</h1>
-    <div class="podium">${stageRows.map((r, i) => {
-      const visible = i >= N - shown;   // 아래(꼴찌)부터 공개
-      return `<div class="pl ${r.rank === 1 ? "top" : ""} ${visible ? "" : "hidden"}"><span class="rk">${r.rank === 1 ? "🏆" : r.rank + "위"}</span><span class="nm">${esc(r.name)}${r.title ? ` <small style="font-size:.6em">「${esc(r.title)}」</small>` : ""}</span><span class="sc">${fmt(r)}</span></div>`;
-    }).join("")}</div>
-    <div class="stage-ctl">${allShown ? "" : `<button class="btn yellow" id="next">${shown === N - 1 || stageRows.slice(0, N - shown).every(r => r.rank === 1) ? "🥁 1위 공개!" : "다음 팀 공개 ▶"}</button>`}
-      <button class="btn gray" id="exit">닫기</button></div>`;
-  document.getElementById("next")?.addEventListener("click", e => {
-    const remaining = stageRows.slice(0, N - shown);
-    // 남은 팀이 모두 공동 1위면 한 번에 공개
-    const isFinal = remaining.every(r => r.rank === 1);
-    e.currentTarget.disabled = true; e.currentTarget.textContent = "두구두구…";
-    ac();
-    const wait = SFX.drumroll(isFinal ? 3 : 1.1, isFinal);
-    setTimeout(() => {
-      shown = isFinal ? N : shown + 1;
-      drawStage();
-      if (isFinal) { SFX.fanfare(); confetti(); setTimeout(confetti, 1600); } else SFX.reveal();
-    }, wait);
-  });
-  document.getElementById("exit").onclick = () => st.classList.remove("show");
+async function runShow(){
+  if (running) return; running = true; ac();
+  const st = document.getElementById("stage"), sc = document.getElementById("sc");
+  document.getElementById("go").remove();
+  const say = (html, cls = "sc-msg") => { if (running) sc.innerHTML = `<div class="${cls}">${html}</div>`; };
+  const winners = stageRows.filter(r => r.rank === 1);
+  const names = stageRows.map(r => r.name);
+
+  st.classList.add("lit"); SFX.riser(2.6);
+  say("📣 지금부터<br>1위를 발표하겠습니다!!"); await sleep(2300); if (!running) return;
+  say("과연… 영광의 1위는?!<small>두근두근 💓 두근두근 💓</small>"); SFX.boom(.5); await sleep(2200); if (!running) return;
+  for (const n of [3, 2, 1]) { say(n, "cnt"); SFX.boom(1); await sleep(850); if (!running) return; }
+
+  // 팀 이름 룰렛 (점점 느려지며 멈춤)
+  sc.innerHTML = `<div class="roul" id="roul">?</div>`; st.classList.add("shake");
+  const rl = document.getElementById("roul");
+  SFX.drumroll(4.6, true);
+  let d = 55, k = Math.floor(Math.random() * names.length), tTot = 0;
+  while (tTot < 4300 && running) {
+    rl.textContent = names.length > 1 ? names[k++ % names.length] : "? ? ?";
+    SFX.tick(); await sleep(d); tTot += d; d = Math.min(d * 1.09, 420);
+  }
+  if (!running) return;
+  st.classList.remove("shake");
+  rl.textContent = "…"; await sleep(500); if (!running) return;
+
+  // 짜잔!
+  const title = winners.length === 1 && winners[0].title ? `<div class="wt">「${esc(winners[0].title)}」</div>` : "";
+  sc.innerHTML = `<div class="win"><div class="crown">🏆</div><div class="lbl">${winners.length > 1 ? "공동 1위" : "1위"}</div>
+    <div class="wn">${winners.map(w => esc(w.name)).join(" & ")}</div>${title}</div>
+    <div class="congrats">🎉 축하합니다!! 🎉</div>`;
+  st.classList.add("won");
+  SFX.fanfare(); confetti(); setTimeout(confetti, 1300); setTimeout(confetti, 2800);
+  running = false;
 }
+
 let PS = [], fxRun = false;
 function confetti(){
   const cv = document.getElementById("fx"), ctx = cv.getContext("2d");

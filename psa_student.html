@@ -104,6 +104,10 @@
   .item.ok h3::after{content:" ✔"; color:var(--green)}
   .stars button.on span{color:#c98a00; font-weight:bold}
   .btn.go{background:#ff5a4e; box-shadow:0 4px 0 #d23a30}
+  .fin .drum{font-family:"Jua",sans-serif; font-size:30px; margin:6px 0}
+  .fin .drum span{display:inline-block; animation:hop .9s ease-in-out infinite}
+  .fin .drum span:nth-child(2){animation-delay:.15s} .fin .drum span:nth-child(3){animation-delay:.3s}
+  @keyframes hop{50%{transform:translateY(-10px) scale(1.15); color:#ff5a4e}}
   .btn.go:disabled{background:var(--off); box-shadow:none}
 
 </style>
@@ -259,6 +263,16 @@ function render(){
     for (const [name, dev] of claims) if (dev === DEVICE) { me = name; ls.set("psa_me", me); break; }
   }
   setMe();
+  if (contest.current === "__done__") {   // 모든 평가 끝!
+    app.innerHTML = `<div class="card center film fin">
+      <div class="light"></div>
+      <p class="big">모든 평가가 끝났어요! 🎬</p>
+      <p class="muted" style="font-size:18px">평가해 준 우리 친구들, 정말 고마워요 💛</p>
+      <div class="drum">🥁 <span>두근</span><span>두근</span><span>…</span></div>
+      <p class="big" style="font-size:24px">과연 1위는 누구일까요?</p>
+      <p class="muted">이제 <b>앞쪽 화면</b>을 봐 주세요 👀✨</p></div>`;
+    return;
+  }
   if (!me) return renderNames();
 
   const team = (contest.teams || []).find(t => t.id === contest.current);
