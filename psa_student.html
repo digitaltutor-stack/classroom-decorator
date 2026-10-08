@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>공익광고 평가 - 학생</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fff7e0; --ink:#2b2b2b; --sub:#6b6457; --card:#ffffff;
+    --yellow:#ffc928; --road:#3a3d44; --red:#ff5a4e; --green:#2fb36d; --blue:#3d8bfd;
+    --line:#eadfc4; --off:#d9d4c7;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0}
+  body{background:var(--bg); color:var(--ink); font-family:"Gowun Dodum",sans-serif; min-height:100vh; touch-action:manipulation}
+  header{background:var(--road); color:#fff; padding:14px 16px 22px; position:relative}
+  header::after{ /* 횡단보도 줄무늬 */
+    content:""; position:absolute; left:0; right:0; bottom:0; height:10px;
+    background:repeating-linear-gradient(90deg,#fff 0 28px,transparent 28px 48px);
+  }
+  header h1{font-family:"Jua",sans-serif; font-weight:400; margin:0; font-size:24px; display:flex; align-items:center; gap:8px}
+  header .me{font-size:14px; opacity:.85; margin-top:4px; display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+  header .me button{background:transparent; color:#fff; border:1px solid rgba(255,255,255,.5); border-radius:999px; padding:3px 10px; font:inherit; font-size:13px}
+  main{max-width:720px; margin:0 auto; padding:20px 16px 60px}
+  .card{background:var(--card); border:2px solid var(--line); border-radius:22px; padding:22px 18px; box-shadow:0 4px 0 var(--line)}
+  .center{text-align:center}
+  .big{font-family:"Jua",sans-serif; font-size:26px; margin:6px 0 10px}
+  .muted{color:var(--sub)}
+  .light{width:74px; height:74px; margin:6px auto 4px; border-radius:50%; background:var(--yellow); box-shadow:0 0 0 8px #3a3d44, 0 0 24px var(--yellow); animation:blink 1.6s infinite}
+  .light.go{background:var(--green); box-shadow:0 0 0 8px #3a3d44, 0 0 24px var(--green); animation:none}
+  @keyframes blink{50%{opacity:.45}}
+
+  /* 이름 고르기 */
+  .names{display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; margin-top:14px}
+  .names button{font:inherit; font-size:18px; padding:14px 8px; border-radius:16px; border:2px solid var(--line); background:#fff; color:var(--ink)}
+  .names button:active{transform:scale(.97)}
+  .confirm{display:flex; gap:10px; justify-content:center; margin-top:16px}
+  .btn{font-family:"Jua",sans-serif; font-size:20px; border:none; border-radius:16px; padding:14px 22px; background:var(--blue); color:#fff; box-shadow:0 4px 0 #2a64c0}
+  .btn.gray{background:#c9c3b6; box-shadow:0 4px 0 #a39d90}
+  .btn:disabled{background:var(--off); box-shadow:none; color:#fff}
+  .btn:active:not(:disabled){transform:translateY(3px); box-shadow:none}
+
+  /* 평가 */
+  .team-tag{display:inline-block; background:var(--yellow); border-radius:999px; padding:4px 14px; font-family:"Jua",sans-serif; font-size:16px}
+  .team-name{font-family:"Jua",sans-serif; font-size:30px; margin:8px 0 2px}
+  .item{border-top:2px dashed var(--line); padding:16px 0 6px}
+  .item h3{font-family:"Jua",sans-serif; font-weight:400; font-size:21px; margin:0 0 2px}
+  .item p{margin:0 0 10px; color:var(--sub); font-size:15px}
+  .stars{display:flex; gap:6px; justify-content:space-between}
+  .stars button{flex:1; background:none; border:none; padding:4px 0; font:inherit; color:var(--sub); font-size:12px; display:flex; flex-direction:column; align-items:center; gap:2px}
+  .stars svg{width:48px; height:48px; max-width:100%}
+  .stars svg path{fill:#ece6d6; stroke:#d5ccb4; stroke-width:1.5; transition:fill .15s}
+  .stars button.on svg path{fill:var(--yellow); stroke:#e3a800}
+  .stars button.pop svg{animation:pop .25s}
+  @keyframes pop{50%{transform:scale(1.25)}}
+  .submit-row{margin-top:18px; text-align:center}
+  .err{color:var(--red); margin-top:10px; min-height:1.2em}
+  .done-emoji{font-size:64px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🚸 공익광고 영상 평가</h1>
+  <div class="me" id="meBar" hidden><span id="meName"></span><button id="changeName">이름 바꾸기</button></div>
+</header>
+<main id="app"><div class="card center"><p class="muted">연결 중이에요…</p></div></main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, onSnapshot, setDoc, collection, query, where, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCNl5OGGWMQwx6axvqP12oAUScRfavNlzw",
+  authDomain: "class-link-3a434.firebaseapp.com",
+  projectId: "class-link-3a434",
+  storageBucket: "class-link-3a434.firebasestorage.app",
+  messagingSenderId: "429666244390",
+  appId: "1:429666244390:web:2fc9f7730787b1eeb313e7"
+};
+const CONTEST_ID = "psa2026";          // 선생님 화면과 같아야 해요
+const ITEM_HINTS = [
+  "광고가 전하려는 말이 잘 느껴졌나요?",
+  "새롭고 재미있는 아이디어였나요?",
+  "화면·소리·편집이 깔끔했나요?"
+];
+const STAR_LABEL = ["아쉬워요","조금 좋아요","좋아요","아주 좋아요","최고예요"];
+
+const db = getFirestore(initializeApp(firebaseConfig));
+const app = document.getElementById("app");
+const store = {
+  get(){ try{ return localStorage.getItem("psa_me") }catch(e){ return null } },
+  set(v){ try{ v ? localStorage.setItem("psa_me", v) : localStorage.removeItem("psa_me") }catch(e){} }
+};
+
+let contest = null;          // {teams, students, items, current}
+let me = store.get();
+let picked = null;           // 이름 고르기 확인 단계
+let submitted = new Set();   // 현재 팀에 제출한 학생 이름
+let scores = [0,0,0];
+let scoreTeam = null;
+let sending = false, errMsg = "";
+let unsubVotes = null, votesTeam = null;
+
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const voteId = (team, name) => team + "__" + encodeURIComponent(name);
+const STAR = '<svg viewBox="0 0 24 24"><path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.4l-5.8 3.1 1.1-6.5L2.6 9.4l6.5-.9z"/></svg>';
+
+onSnapshot(doc(db, "psa_rating", CONTEST_ID), snap => {
+  contest = snap.exists() ? snap.data() : null;
+  if (contest && me && !(contest.students || []).includes(me)) { me = null; store.set(null); }
+  watchVotes();
+  render();
+}, err => { app.innerHTML = `<div class="card center"><p class="big">연결이 안 돼요 😢</p><p class="muted">선생님께 알려주세요.<br><small>${esc(err.code)}</small></p></div>`; });
+
+function watchVotes(){
+  const cur = contest?.current || null;
+  if (cur === votesTeam) return;
+  if (unsubVotes) { unsubVotes(); unsubVotes = null; }
+  votesTeam = cur; submitted = new Set();
+  if (!cur) return;
+  const q = query(collection(db, "psa_rating", CONTEST_ID, "votes"), where("team", "==", cur));
+  unsubVotes = onSnapshot(q, s => { submitted = new Set(s.docs.map(d => d.data().student)); render(); });
+}
+
+function render(){
+  const bar = document.getElementById("meBar");
+  bar.hidden = !me;
+  document.getElementById("meName").textContent = me ? `👤 ${me}` : "";
+
+  if (!contest) { app.innerHTML = `<div class="card center"><div class="light"></div><p class="big">선생님이 준비 중이에요</p></div>`; return; }
+
+  if (!me) return renderNames();
+
+  const team = (contest.teams || []).find(t => t.id === contest.current);
+  if (!team) {
+    app.innerHTML = `<div class="card center"><div class="light"></div><p class="big">잠깐 기다려요!</p><p class="muted">선생님이 다음 영상을 틀어줄 거예요.<br>영상을 집중해서 봐요 👀</p></div>`;
+    return;
+  }
+  if (submitted.has(me)) {
+    app.innerHTML = `<div class="card center"><div class="done-emoji">🎉</div><p class="big">${esc(team.name)} 평가 완료!</p><p class="muted">다음 영상을 기다려요.</p></div>`;
+    return;
+  }
+  if (scoreTeam !== team.id) { scoreTeam = team.id; scores = [0,0,0]; errMsg = ""; }
+  renderForm(team);
+}
+
+function renderNames(){
+  const list = contest.students || [];
+  if (!list.length) { app.innerHTML = `<div class="card center"><div class="light"></div><p class="big">명단을 준비 중이에요</p></div>`; return; }
+  if (picked) {
+    app.innerHTML = `<div class="card center"><p class="muted">내 이름이 맞나요?</p><p class="big" style="font-size:34px">${esc(picked)}</p>
+      <div class="confirm"><button class="btn gray" id="no">아니요</button><button class="btn" id="yes">네, 맞아요!</button></div></div>`;
+    document.getElementById("no").onclick = () => { picked = null; render(); };
+    document.getElementById("yes").onclick = () => { me = picked; picked = null; store.set(me); render(); };
+    return;
+  }
+  app.innerHTML = `<div class="card"><p class="big center">내 이름을 눌러요</p>
+    <div class="names">${list.map((n,i) => `<button data-i="${i}">${esc(n)}</button>`).join("")}</div></div>`;
+  app.querySelectorAll(".names button").forEach(b => b.onclick = () => { picked = list[+b.dataset.i]; render(); });
+}
+
+function renderForm(team){
+  const items = contest.items || ["메시지 전달력","창의성","영상 완성도"];
+  const ready = scores.every(v => v > 0);
+  app.innerHTML = `<div class="card">
+    <div class="center"><div class="light go"></div><span class="team-tag">지금 평가할 영상</span>
+      <div class="team-name">${esc(team.name)}</div>${team.title ? `<div class="muted">「${esc(team.title)}」</div>` : ""}</div>
+    ${items.map((it, k) => `<div class="item"><h3>${k+1}. ${esc(it)}</h3><p>${esc(ITEM_HINTS[k] || "")}</p>
+      <div class="stars" data-k="${k}">${[1,2,3,4,5].map(v => `<button data-v="${v}" class="${scores[k] >= v ? "on" : ""}" aria-label="${v}점">${STAR}<span>${STAR_LABEL[v-1]}</span></button>`).join("")}</div></div>`).join("")}
+    <div class="submit-row"><button class="btn" id="send" ${ready && !sending ? "" : "disabled"}>${sending ? "보내는 중…" : ready ? "평가 보내기 ✈️" : "별을 모두 골라요"}</button>
+      <div class="err">${esc(errMsg)}</div></div></div>`;
+  app.querySelectorAll(".stars").forEach(row => {
+    const k = +row.dataset.k;
+    row.querySelectorAll("button").forEach(b => b.onclick = () => {
+      scores[k] = +b.dataset.v; renderForm(team);
+      app.querySelector(`.stars[data-k="${k}"] button[data-v="${b.dataset.v}"]`)?.classList.add("pop");
+    });
+  });
+  document.getElementById("send").onclick = () => send(team);
+}
+
+async function send(team){
+  if (sending || submitted.has(me)) return;
+  sending = true; errMsg = ""; renderForm(team);
+  try {
+    await setDoc(doc(db, "psa_rating", CONTEST_ID, "votes", voteId(team.id, me)), {
+      student: me, team: team.id, s: scores.slice(), total: scores[0] + scores[1] + scores[2], at: serverTimestamp()
+    });
+    submitted.add(me);
+  } catch (e) {
+    errMsg = e.code === "permission-denied" ? "이미 보냈거나, 지금은 보낼 수 없어요. 선생님께 알려주세요." : "전송이 안 됐어요. 다시 눌러 주세요.";
+  }
+  sending = false; render();
+}
+
+document.getElementById("changeName").onclick = () => { me = null; picked = null; store.set(null); render(); };
+</script>
+</body>
+</html>

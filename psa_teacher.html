@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>공익광고 평가 - 선생님</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#fff7e0; --ink:#2b2b2b; --sub:#6b6457; --card:#fff; --line:#eadfc4;
+    --yellow:#ffc928; --road:#3a3d44; --red:#ff5a4e; --green:#2fb36d; --blue:#3d8bfd;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:"Gowun Dodum",sans-serif}
+  header{background:var(--road); color:#fff; padding:14px 20px 24px; position:relative; display:flex; align-items:center; gap:16px; flex-wrap:wrap}
+  header::after{content:""; position:absolute; left:0; right:0; bottom:0; height:10px; background:repeating-linear-gradient(90deg,#fff 0 30px,transparent 30px 52px)}
+  header h1{font-family:"Jua",sans-serif; font-weight:400; margin:0; font-size:24px}
+  nav{display:flex; gap:6px; margin-left:auto}
+  nav button{font-family:"Jua",sans-serif; font-size:17px; border:none; border-radius:12px; padding:8px 16px; background:#555a63; color:#fff; cursor:pointer}
+  nav button.on{background:var(--yellow); color:var(--ink)}
+  main{max-width:1100px; margin:0 auto; padding:20px}
+  .card{background:var(--card); border:2px solid var(--line); border-radius:18px; padding:18px; margin-bottom:16px}
+  h2{font-family:"Jua",sans-serif; font-weight:400; margin:0 0 12px; font-size:22px}
+  .muted{color:var(--sub)} small.muted{font-size:13px}
+  .btn{font-family:"Jua",sans-serif; font-size:17px; border:none; border-radius:12px; padding:10px 16px; background:var(--blue); color:#fff; cursor:pointer}
+  .btn.gray{background:#b9b3a6} .btn.red{background:var(--red)} .btn.green{background:var(--green)} .btn.yellow{background:var(--yellow); color:var(--ink)}
+  .teams{display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:10px}
+  .team{border:2px solid var(--line); border-radius:14px; padding:12px; background:#fffdf6; cursor:pointer; text-align:left; font:inherit}
+  .team b{font-family:"Jua",sans-serif; font-weight:400; font-size:20px; display:block}
+  .team.live{border-color:var(--green); background:#e9f9ef; box-shadow:0 0 0 3px #bfeccf}
+  .team .cnt{font-size:14px; color:var(--sub)}
+  .live-head{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+  .dot{width:14px; height:14px; border-radius:50%; background:var(--green); animation:bl 1.2s infinite} @keyframes bl{50%{opacity:.3}}
+  .bar{height:16px; background:#efe8d6; border-radius:99px; overflow:hidden; flex:1; min-width:160px}
+  .bar i{display:block; height:100%; background:var(--green); transition:width .3s}
+  .who{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:6px; margin-top:12px}
+  .who span{padding:6px 8px; border-radius:10px; background:#f3eee2; color:#9a927f; font-size:15px}
+  .who span.ok{background:#dff5e7; color:#1d7a47}
+  table{width:100%; border-collapse:collapse; font-size:17px}
+  th,td{padding:10px 8px; border-bottom:1px solid var(--line); text-align:center}
+  th{font-weight:400; color:var(--sub); font-size:14px}
+  td.name{text-align:left; font-family:"Jua",sans-serif; font-size:19px}
+  tr.first td{background:#fff3c4}
+  .seg{display:inline-flex; border:2px solid var(--line); border-radius:12px; overflow:hidden}
+  .seg button{border:none; padding:8px 14px; background:#fff; font:inherit; cursor:pointer}
+  .seg button.on{background:var(--road); color:#fff}
+  textarea,input[type=text]{width:100%; font:inherit; font-size:16px; border:2px solid var(--line); border-radius:12px; padding:10px; background:#fffdf6}
+  textarea{min-height:200px}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px} @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px}
+  .toast{position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--road); color:#fff; padding:10px 18px; border-radius:12px; opacity:0; transition:.3s; pointer-events:none}
+  .toast.show{opacity:1}
+
+  /* 발표 화면 */
+  #stage{position:fixed; inset:0; background:var(--road); color:#fff; display:none; flex-direction:column; align-items:center; justify-content:center; z-index:10; padding:30px}
+  #stage.show{display:flex}
+  #stage h1{font-family:"Jua",sans-serif; font-weight:400; font-size:44px; margin:0 0 24px}
+  .podium{width:min(900px,100%); display:flex; flex-direction:column; gap:12px}
+  .pl{display:flex; align-items:center; gap:18px; background:#4a4e57; border-radius:18px; padding:14px 22px; font-family:"Jua",sans-serif; font-size:30px; animation:in .5s both}
+  .pl .rk{width:80px; text-align:center}
+  .pl .nm{flex:1}
+  .pl .sc{font-size:26px; opacity:.9}
+  .pl.hidden{visibility:hidden}
+  .pl.top{background:var(--yellow); color:var(--ink); font-size:42px; padding:22px; box-shadow:0 0 40px rgba(255,201,40,.6)}
+  @keyframes in{from{opacity:0; transform:translateY(20px) scale(.95)}}
+  .stage-ctl{position:absolute; bottom:20px; display:flex; gap:10px}
+  #fx{position:fixed; inset:0; pointer-events:none; z-index:11}
+</style>
+</head>
+<body>
+<header>
+  <h1>🚸 공익광고 평가 · 선생님</h1>
+  <nav><button data-tab="run" class="on">진행</button><button data-tab="result">결과</button><button data-tab="setup">설정</button></nav>
+</header>
+<main id="app"><div class="card">연결 중…</div></main>
+<div id="stage"></div><canvas id="fx"></canvas>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, onSnapshot, setDoc, updateDoc, collection, getDocs, writeBatch }
+  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCNl5OGGWMQwx6axvqP12oAUScRfavNlzw",
+  authDomain: "class-link-3a434.firebaseapp.com",
+  projectId: "class-link-3a434",
+  storageBucket: "class-link-3a434.firebasestorage.app",
+  messagingSenderId: "429666244390",
+  appId: "1:429666244390:web:2fc9f7730787b1eeb313e7"
+};
+const CONTEST_ID = "psa2026";   // 학생 화면과 같아야 해요
+const DEFAULT = {
+  teams: [1,2,3,4,5].map(i => ({ id: "t"+i, name: i+"팀", title: "" })),
+  students: [],
+  items: ["메시지 전달력","창의성","영상 완성도"],
+  current: null
+};
+
+const db = getFirestore(initializeApp(firebaseConfig));
+const contestRef = doc(db, "psa_rating", CONTEST_ID);
+const votesCol = collection(db, "psa_rating", CONTEST_ID, "votes");
+const app = document.getElementById("app");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+let C = null, votes = [], tab = "run", metric = "sum", resetArm = false;
+
+onSnapshot(contestRef, async snap => {
+  if (!snap.exists()) { await setDoc(contestRef, DEFAULT); return; }
+  C = snap.data(); render();
+}, err => { app.innerHTML = `<div class="card"><h2>Firebase 연결 실패</h2><p>${esc(err.code)} — 규칙(Rules) 설정을 확인해 주세요.</p></div>`; });
+onSnapshot(votesCol, s => { votes = s.docs.map(d => d.data()); if (tab !== "setup") render(); });
+
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  tab = b.dataset.tab; resetArm = false;
+  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b)); render();
+});
+
+function toast(m){ const t = document.getElementById("toast"); t.textContent = m; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 1800); }
+
+function stats(){
+  const items = C.items || DEFAULT.items;
+  const rows = (C.teams || []).map(t => {
+    const v = votes.filter(x => x.team === t.id);
+    const n = v.length, sum = v.reduce((a, x) => a + (x.total || 0), 0);
+    const per = items.map((_, k) => n ? v.reduce((a, x) => a + (x.s?.[k] || 0), 0) / n : 0);
+    return { ...t, n, sum, avg: n ? sum / n : 0, per };
+  });
+  const key = metric === "sum" ? "sum" : "avg";
+  rows.sort((a, b) => b[key] - a[key]);
+  rows.forEach((r, i) => r.rank = i && Math.abs(r[key] - rows[i-1][key]) < 1e-9 ? rows[i-1].rank : i + 1);
+  return rows;
+}
+
+function render(){
+  if (!C) return;
+  if (tab === "run") renderRun(); else if (tab === "result") renderResult(); else renderSetup();
+}
+
+function renderRun(){
+  const students = C.students || [];
+  const cur = (C.teams || []).find(t => t.id === C.current);
+  let live = `<p class="muted">아래에서 팀을 누르면 학생 태블릿에 그 팀 평가지가 열려요.</p>`;
+  if (cur) {
+    const done = new Set(votes.filter(v => v.team === cur.id).map(v => v.student));
+    const n = students.filter(s => done.has(s)).length;
+    live = `<div class="live-head"><span class="dot"></span><h2 style="margin:0">지금 평가 중: ${esc(cur.name)}</h2>
+        <div class="bar"><i style="width:${students.length ? n / students.length * 100 : 0}%"></i></div>
+        <b>${n} / ${students.length}명</b><button class="btn red" id="close">평가 닫기</button></div>
+      <div class="who">${students.map(s => `<span class="${done.has(s) ? "ok" : ""}">${done.has(s) ? "✅" : "⏳"} ${esc(s)}</span>`).join("")}</div>`;
+  }
+  app.innerHTML = `<div class="card">${live}</div>
+    <div class="card"><h2>팀 목록</h2><div class="teams">${(C.teams || []).map(t => {
+      const c = votes.filter(v => v.team === t.id).length;
+      return `<button class="team ${t.id === C.current ? "live" : ""}" data-id="${t.id}"><b>${esc(t.name)}</b>${t.title ? `<span>${esc(t.title)}</span><br>` : ""}<span class="cnt">평가 ${c}명</span></button>`;
+    }).join("")}</div>${students.length ? "" : `<p style="color:var(--red)">⚠️ 설정 탭에서 학생 명단을 먼저 입력해 주세요.</p>`}</div>`;
+  app.querySelectorAll(".team").forEach(b => b.onclick = () => updateDoc(contestRef, { current: b.dataset.id }));
+  document.getElementById("close")?.addEventListener("click", () => updateDoc(contestRef, { current: null }));
+}
+
+function renderResult(){
+  const items = C.items || DEFAULT.items, rows = stats(), total = (C.students || []).length;
+  const fmt = x => (Math.round(x * 100) / 100).toString();
+  app.innerHTML = `<div class="card"><div class="row" style="margin:0 0 12px; justify-content:space-between">
+      <h2 style="margin:0">순위표</h2>
+      <div class="row" style="margin:0"><span class="muted">순위 기준</span>
+        <div class="seg"><button data-m="sum" class="${metric === "sum" ? "on" : ""}">합계</button><button data-m="avg" class="${metric === "avg" ? "on" : ""}">평균</button></div>
+        <button class="btn yellow" id="show">🏆 발표 화면</button></div></div>
+    <table><tr><th>순위</th><th style="text-align:left">팀</th><th>평가 인원</th>${items.map(i => `<th>${esc(i)}<br>(평균)</th>`).join("")}<th>합계</th><th>평균<br>(15점 만점)</th></tr>
+    ${rows.map(r => `<tr class="${r.rank === 1 && r.n ? "first" : ""}"><td>${r.rank === 1 && r.n ? "🥇" : r.rank}</td><td class="name">${esc(r.name)}</td>
+      <td>${r.n}${total ? ` / ${total}` : ""}</td>${r.per.map(p => `<td>${fmt(p)}</td>`).join("")}<td><b>${r.sum}</b></td><td><b>${fmt(r.avg)}</b></td></tr>`).join("")}</table>
+    <p class="muted" style="margin-top:12px">💡 팀마다 평가 인원이 다르면(결석·미제출) <b>합계</b>는 불공평해질 수 있어요. 그럴 땐 <b>평균</b>으로 보세요.</p></div>`;
+  app.querySelectorAll(".seg button").forEach(b => b.onclick = () => { metric = b.dataset.m; render(); });
+  document.getElementById("show").onclick = openStage;
+}
+
+function renderSetup(){
+  const teamsTxt = (C.teams || []).map(t => t.title ? `${t.name} | ${t.title}` : t.name).join("\n");
+  const items = C.items || DEFAULT.items;
+  app.innerHTML = `<div class="grid2">
+    <div class="card"><h2>팀 목록</h2><p class="muted">한 줄에 한 팀. 영상 제목은 <b>|</b> 뒤에 써요.<br>예) <code>1팀 | 멈춰! 차가 와요</code></p>
+      <textarea id="teams">${esc(teamsTxt)}</textarea>
+      <small class="muted">⚠️ 평가를 시작한 뒤에는 팀 <b>순서</b>를 바꾸지 마세요(이름 수정은 괜찮아요).</small></div>
+    <div class="card"><h2>학생 명단</h2><p class="muted">한 줄에 한 명. 동명이인은 반을 붙여요.<br>예) <code>3-2 김민준</code></p>
+      <textarea id="students">${esc((C.students || []).join("\n"))}</textarea></div></div>
+    <div class="card"><h2>평가 항목 (각 1~5점)</h2><div class="grid2" style="grid-template-columns:repeat(3,1fr)">
+      ${items.map((it, k) => `<input type="text" id="item${k}" value="${esc(it)}">`).join("")}</div>
+      <div class="row"><button class="btn green" id="save">💾 저장하기</button></div></div>
+    <div class="card"><h2>평가 기록 지우기</h2><p class="muted">모든 학생의 점수를 지워요. 되돌릴 수 없어요.</p>
+      <button class="btn ${resetArm ? "red" : "gray"}" id="reset">${resetArm ? "정말 지울까요? 한 번 더 누르면 삭제돼요" : `전체 점수 지우기 (${votes.length}건)`}</button></div>`;
+
+  document.getElementById("save").onclick = async () => {
+    const lines = document.getElementById("teams").value.split("\n").map(s => s.trim()).filter(Boolean);
+    const teams = lines.map((l, i) => { const [name, ...rest] = l.split("|"); return { id: "t" + (i + 1), name: name.trim(), title: rest.join("|").trim() }; });
+    const students = [...new Set(document.getElementById("students").value.split("\n").map(s => s.trim()).filter(Boolean))];
+    const its = [0,1,2].map(k => document.getElementById("item" + k).value.trim() || DEFAULT.items[k]);
+    try { await updateDoc(contestRef, { teams, students, items: its }); toast("저장했어요 ✅"); }
+    catch (e) { toast("저장 실패: " + e.code); }
+  };
+  document.getElementById("reset").onclick = async () => {
+    if (!resetArm) { resetArm = true; render(); return; }
+    resetArm = false;
+    try {
+      const all = await getDocs(votesCol);
+      for (let i = 0; i < all.docs.length; i += 400) {
+        const b = writeBatch(db); all.docs.slice(i, i + 400).forEach(d => b.delete(d.ref)); await b.commit();
+      }
+      await updateDoc(contestRef, { current: null });
+      toast("모두 지웠어요");
+    } catch (e) { toast("삭제 실패: " + e.code); }
+    render();
+  };
+}
+
+/* ── 발표 화면: 꼴찌부터 한 팀씩 공개, 마지막에 1위 ── */
+let stageRows = [], shown = 0;
+function openStage(){
+  stageRows = stats().filter(r => r.n);
+  if (!stageRows.length) { toast("아직 점수가 없어요"); return; }
+  shown = 0; drawStage(); document.getElementById("stage").classList.add("show");
+}
+function drawStage(){
+  const st = document.getElementById("stage"), N = stageRows.length;
+  const fmt = r => metric === "sum" ? `${r.sum}점` : `평균 ${(Math.round(r.avg * 100) / 100)}점`;
+  const allShown = shown >= N;
+  st.innerHTML = `<h1>${allShown ? "🎉 축하합니다! 🎉" : "🚸 공익광고 시상식"}</h1>
+    <div class="podium">${stageRows.map((r, i) => {
+      const visible = i >= N - shown;   // 아래(꼴찌)부터 공개
+      return `<div class="pl ${r.rank === 1 ? "top" : ""} ${visible ? "" : "hidden"}"><span class="rk">${r.rank === 1 ? "🏆" : r.rank + "위"}</span><span class="nm">${esc(r.name)}${r.title ? ` <small style="font-size:.6em">「${esc(r.title)}」</small>` : ""}</span><span class="sc">${fmt(r)}</span></div>`;
+    }).join("")}</div>
+    <div class="stage-ctl">${allShown ? "" : `<button class="btn yellow" id="next">${shown === N - 1 || stageRows.slice(0, N - shown).every(r => r.rank === 1) ? "🥁 1위 공개!" : "다음 팀 공개 ▶"}</button>`}
+      <button class="btn gray" id="exit">닫기</button></div>`;
+  document.getElementById("next")?.addEventListener("click", () => {
+    const remaining = stageRows.slice(0, N - shown);
+    // 남은 팀이 모두 공동 1위면 한 번에 공개
+    shown = remaining.every(r => r.rank === 1) ? N : shown + 1;
+    drawStage(); if (shown >= N) confetti();
+  });
+  document.getElementById("exit").onclick = () => st.classList.remove("show");
+}
+function confetti(){
+  const cv = document.getElementById("fx"), ctx = cv.getContext("2d");
+  cv.width = innerWidth; cv.height = innerHeight;
+  const cols = ["#ffc928","#ff5a4e","#2fb36d","#3d8bfd","#ffffff"];
+  const ps = Array.from({ length: 180 }, () => ({ x: Math.random() * cv.width, y: -20 - Math.random() * cv.height * .5,
+    vx: (Math.random() - .5) * 3, vy: 2 + Math.random() * 4, r: Math.random() * 6, w: 6 + Math.random() * 6, c: cols[Math.random() * 5 | 0] }));
+  let f = 0;
+  (function tick(){
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ps.forEach(p => { p.x += p.vx; p.y += p.vy; p.r += .1; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.w/2, -3, p.w, 6); ctx.restore(); });
+    if (++f < 260) requestAnimationFrame(tick); else ctx.clearRect(0, 0, cv.width, cv.height);
+  })();
+}
+</script>
+</body>
+</html>
