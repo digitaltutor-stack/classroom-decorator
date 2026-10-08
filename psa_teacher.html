@@ -79,7 +79,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, onSnapshot, setDoc, updateDoc, collection, getDocs, writeBatch }
+import { getFirestore, doc, onSnapshot, setDoc, updateDoc, collection, getDocs, writeBatch, deleteDoc }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -95,7 +95,8 @@ const DEFAULT = {
   teams: [1,2,3,4,5].map(i => ({ id: "t"+i, name: i+"팀", title: "" })),
   students: [],
   items: ["메시지 전달력","창의성","영상 완성도"],
-  current: null
+  current: null,
+  claimOpen: false
 };
 
 const db = getFirestore(initializeApp(firebaseConfig));
@@ -104,13 +105,15 @@ const votesCol = collection(db, "psa_rating", CONTEST_ID, "votes");
 const app = document.getElementById("app");
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
-let C = null, votes = [], tab = "run", metric = "sum", resetArm = false;
+let C = null, votes = [], claims = [], tab = "run", metric = "sum", resetArm = false, releaseArm = null;
+const claimsCol = collection(db, "psa_rating", CONTEST_ID, "claims");
 
 onSnapshot(contestRef, async snap => {
   if (!snap.exists()) { await setDoc(contestRef, DEFAULT); return; }
   C = snap.data(); render();
 }, err => { app.innerHTML = `<div class="card"><h2>Firebase 연결 실패</h2><p>${esc(err.code)} — 규칙(Rules) 설정을 확인해 주세요.</p></div>`; });
 onSnapshot(votesCol, s => { votes = s.docs.map(d => d.data()); if (tab !== "setup") render(); });
+onSnapshot(claimsCol, s => { claims = s.docs.map(d => ({ name: d.id, device: d.data().device })); if (tab !== "setup") render(); });
 
 document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   tab = b.dataset.tab; resetArm = false;
@@ -150,13 +153,44 @@ function renderRun(){
         <b>${n} / ${students.length}명</b><button class="btn red" id="close">평가 닫기</button></div>
       <div class="who">${students.map(s => `<span class="${done.has(s) ? "ok" : ""}">${done.has(s) ? "✅" : "⏳"} ${esc(s)}</span>`).join("")}</div>`;
   }
-  app.innerHTML = `<div class="card">${live}</div>
+  const cmap = new Map(claims.map(c => [c.name, c.device]));
+  const devCount = {}; claims.forEach(c => devCount[c.device] = (devCount[c.device] || 0) + 1);
+  const claimed = students.filter(s => cmap.has(s)).length;
+  const claimCard = `<div class="card"><div class="live-head">
+      <h2 style="margin:0">① 이름 고르기</h2>
+      <b>${claimed} / ${students.length}명 선택</b>
+      <button class="btn ${C.claimOpen ? "red" : "green"}" id="claimToggle">${C.claimOpen ? "이름 고르기 닫기" : "이름 고르기 열기"}</button></div>
+    <p class="muted" style="margin:8px 0 0">${C.claimOpen ? "학생들이 지금 이름을 고를 수 있어요. 출석한 학생이 모두 고르면 <b>닫아주세요</b>(닫으면 남은 이름은 아무도 못 골라요)." : "닫혀 있어요. 이미 고른 학생은 그대로 평가할 수 있어요."}
+      이름을 누르면 잠금을 풀 수 있어요(잘못 고른 경우).</p>
+    <div class="who">${students.map(s => {
+      const d = cmap.get(s), dup = d && devCount[d] > 1;
+      return `<span class="${d ? "ok" : ""}" data-n="${esc(s)}" style="cursor:${d ? "pointer" : "default"};${dup ? "background:#ffe1de;color:#b3261e" : ""}">${releaseArm === s ? "↩ 풀까요?" : (d ? (dup ? "⚠️" : "🔒") : "⬜")} ${esc(s)}</span>`;
+    }).join("")}</div>
+    ${Object.values(devCount).some(n => n > 1) ? `<p style="color:#b3261e;margin:8px 0 0">⚠️ 빨간 이름들은 <b>같은 기기</b>에서 골라졌어요. 확인 후 잘못된 이름은 눌러서 풀어주세요.</p>` : ""}
+    <div class="row"><button class="btn gray" id="releaseAll">${releaseArm === "*ALL*" ? "정말 모두 풀까요? 한 번 더 누르기" : "이름 잠금 모두 풀기"}</button></div></div>`;
+  app.innerHTML = `${claimCard}<div class="card"><h2 style="margin-bottom:8px">② 영상 평가</h2>${live}</div>
     <div class="card"><h2>팀 목록</h2><div class="teams">${(C.teams || []).map(t => {
       const c = votes.filter(v => v.team === t.id).length;
       return `<button class="team ${t.id === C.current ? "live" : ""}" data-id="${t.id}"><b>${esc(t.name)}</b>${t.title ? `<span>${esc(t.title)}</span><br>` : ""}<span class="cnt">평가 ${c}명</span></button>`;
     }).join("")}</div>${students.length ? "" : `<p style="color:var(--red)">⚠️ 설정 탭에서 학생 명단을 먼저 입력해 주세요.</p>`}</div>`;
   app.querySelectorAll(".team").forEach(b => b.onclick = () => updateDoc(contestRef, { current: b.dataset.id }));
   document.getElementById("close")?.addEventListener("click", () => updateDoc(contestRef, { current: null }));
+  document.getElementById("claimToggle").onclick = () => updateDoc(contestRef, { claimOpen: !C.claimOpen });
+  app.querySelectorAll(".who span[data-n]").forEach(el => el.onclick = async () => {
+    const n = el.dataset.n; if (!cmap.has(n)) return;
+    if (releaseArm !== n) { releaseArm = n; render(); return; }
+    releaseArm = null;
+    try { await deleteDoc(doc(claimsCol, n)); toast(n + " 잠금을 풀었어요"); } catch (e) { toast("실패: " + e.code); }
+  });
+  document.getElementById("releaseAll").onclick = async () => {
+    if (releaseArm !== "*ALL*") { releaseArm = "*ALL*"; render(); return; }
+    releaseArm = null;
+    try {
+      const all = await getDocs(claimsCol);
+      for (let i = 0; i < all.docs.length; i += 400) { const b = writeBatch(db); all.docs.slice(i, i + 400).forEach(d => b.delete(d.ref)); await b.commit(); }
+      toast("모두 풀었어요");
+    } catch (e) { toast("실패: " + e.code); }
+  };
 }
 
 function renderResult(){
@@ -193,7 +227,7 @@ function renderSetup(){
   document.getElementById("save").onclick = async () => {
     const lines = document.getElementById("teams").value.split("\n").map(s => s.trim()).filter(Boolean);
     const teams = lines.map((l, i) => { const [name, ...rest] = l.split("|"); return { id: "t" + (i + 1), name: name.trim(), title: rest.join("|").trim() }; });
-    const students = [...new Set(document.getElementById("students").value.split("\n").map(s => s.trim()).filter(Boolean))];
+    const students = [...new Set(document.getElementById("students").value.split("\n").map(s => s.replace(/\//g, "-").trim()).filter(Boolean))];
     const its = [0,1,2].map(k => document.getElementById("item" + k).value.trim() || DEFAULT.items[k]);
     try { await updateDoc(contestRef, { teams, students, items: its }); toast("저장했어요 ✅"); }
     catch (e) { toast("저장 실패: " + e.code); }
