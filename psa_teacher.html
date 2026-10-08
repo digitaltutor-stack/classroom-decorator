@@ -139,7 +139,7 @@ const votesCol = collection(db, "psa_rating", CONTEST_ID, "votes");
 const app = document.getElementById("app");
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
-let showTable = false, tableArm = false;   // 순위표는 버튼을 눌러야 보여요 (전자칠판 보호)
+let showTable = false, tableArm = false, setupWarn = "";   // 순위표는 버튼을 눌러야 보여요 (전자칠판 보호)
 let C = null, votes = [], claims = [], tab = "run", metric = "sum", resetArm = false, releaseArm = null;
 const claimsCol = collection(db, "psa_rating", CONTEST_ID, "claims");
 
@@ -157,15 +157,19 @@ document.querySelectorAll("nav button[data-tab]").forEach(b => b.onclick = () =>
 
 function toast(m){ const t = document.getElementById("toast"); t.textContent = m; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 1800); }
 
+const mem = t => t.members || [];
+const hasMembers = () => (C.teams || []).some(t => mem(t).length);
+const curMetric = () => hasMembers() ? "avg" : metric;      // 모둠원이 있으면 평균 고정
+const voters = t => (C.students || []).filter(s => !mem(t).includes(s));   // 그 팀을 평가할 학생
 function stats(){
   const items = C.items || DEFAULT.items;
   const rows = (C.teams || []).map(t => {
-    const v = votes.filter(x => x.team === t.id);
+    const v = votes.filter(x => x.team === t.id && !mem(t).includes(x.student));   // 자기 모둠 표는 빼요
     const n = v.length, sum = v.reduce((a, x) => a + (x.total || 0), 0);
     const per = items.map((_, k) => n ? v.reduce((a, x) => a + (x.s?.[k] || 0), 0) / n : 0);
-    return { ...t, n, sum, avg: n ? sum / n : 0, per };
+    return { ...t, n, sum, avg: n ? sum / n : 0, per, expect: voters(t).length };
   });
-  const key = metric === "sum" ? "sum" : "avg";
+  const key = curMetric() === "sum" ? "sum" : "avg";
   rows.sort((a, b) => b[key] - a[key]);
   rows.forEach((r, i) => r.rank = i && Math.abs(r[key] - rows[i-1][key]) < 1e-9 ? rows[i-1].rank : i + 1);
   return rows;
@@ -186,11 +190,13 @@ function renderRun(){
        <button class="btn yellow" id="finish">🏁 모든 평가 끝내기</button></div>`;
   if (cur) {
     const done = new Set(votes.filter(v => v.team === cur.id).map(v => v.student));
-    const n = students.filter(s => done.has(s)).length;
+    const vs = voters(cur), n = vs.filter(s => done.has(s)).length;
     live = `<div class="live-head"><span class="dot"></span><h2 style="margin:0">지금 평가 중: ${esc(cur.name)}</h2>
-        <div class="bar"><i style="width:${students.length ? n / students.length * 100 : 0}%"></i></div>
-        <b>${n} / ${students.length}명</b><button class="btn red" id="close">평가 닫기</button></div>
-      <div class="who">${students.map(s => `<span class="${done.has(s) ? "ok" : ""}">${done.has(s) ? "✅" : "⏳"} ${esc(s)}</span>`).join("")}</div>`;
+        <div class="bar"><i style="width:${vs.length ? n / vs.length * 100 : 0}%"></i></div>
+        <b>${n} / ${vs.length}명</b><button class="btn red" id="close">평가 닫기</button></div>
+      <div class="who">${students.map(s => mem(cur).includes(s)
+        ? `<span style="background:#e8eefc;color:#5a6b91">🎬 ${esc(s)} (우리 모둠)</span>`
+        : `<span class="${done.has(s) ? "ok" : ""}">${done.has(s) ? "✅" : "⏳"} ${esc(s)}</span>`).join("")}</div>`;
   }
   const cmap = new Map(claims.map(c => [c.name, c.device]));
   const devCount = {}; claims.forEach(c => devCount[c.device] = (devCount[c.device] || 0) + 1);
@@ -209,7 +215,7 @@ function renderRun(){
     <div class="row"><button class="btn gray" id="releaseAll">${releaseArm === "*ALL*" ? "정말 모두 풀까요? 한 번 더 누르기" : "이름 잠금 모두 풀기"}</button></div></div>`;
   app.innerHTML = `${claimCard}<div class="card"><h2 style="margin-bottom:8px">② 영상 평가</h2>${live}</div>
     <div class="card"><h2>팀 목록</h2><div class="teams">${(C.teams || []).map(t => {
-      const c = votes.filter(v => v.team === t.id).length;
+      const c = votes.filter(v => v.team === t.id && !mem(t).includes(v.student)).length;
       return `<button class="team ${t.id === C.current ? "live" : ""}" data-id="${t.id}"><b>${esc(t.name)}</b>${t.title ? `<span>${esc(t.title)}</span><br>` : ""}<span class="cnt">평가 ${c}명</span></button>`;
     }).join("")}</div>${students.length ? "" : `<p style="color:var(--red)">⚠️ 설정 탭에서 학생 명단을 먼저 입력해 주세요.</p>`}</div>`;
   app.querySelectorAll(".team").forEach(b => b.onclick = () => updateDoc(contestRef, { current: b.dataset.id }));
@@ -240,16 +246,17 @@ function renderResult(){
   app.innerHTML = `<div class="card"><div class="row" style="margin:0 0 12px; justify-content:space-between">
       <h2 style="margin:0">순위표</h2>
       <div class="row" style="margin:0"><span class="muted">순위 기준</span>
-        <div class="seg"><button data-m="sum" class="${metric === "sum" ? "on" : ""}">합계</button><button data-m="avg" class="${metric === "avg" ? "on" : ""}">평균</button></div>
+        ${hasMembers() ? `<span class="seg"><button class="on" style="cursor:default">평균 (자기 모둠 제외)</button></span>`
+        : `<div class="seg"><button data-m="sum" class="${metric === "sum" ? "on" : ""}">합계</button><button data-m="avg" class="${metric === "avg" ? "on" : ""}">평균</button></div>`}
         <button class="btn yellow" id="show">🏆 발표 화면</button></div></div>
     ${showTable ? `<div class="row" style="margin:0 0 10px"><button class="btn gray" id="hideT">🙈 순위표 숨기기</button></div>
     <table><tr><th>순위</th><th style="text-align:left">팀</th><th>평가 인원</th>${items.map(i => `<th>${esc(i)}<br>(평균)</th>`).join("")}<th>합계</th><th>평균<br>(15점 만점)</th></tr>
     ${rows.map(r => `<tr class="${r.rank === 1 && r.n ? "first" : ""}"><td>${r.rank === 1 && r.n ? "🥇" : r.rank}</td><td class="name">${esc(r.name)}</td>
-      <td>${r.n}${total ? ` / ${total}` : ""}</td>${r.per.map(p => `<td>${fmt(p)}</td>`).join("")}<td><b>${r.sum}</b></td><td><b>${fmt(r.avg)}</b></td></tr>`).join("")}</table>`
+      <td>${r.n} / ${r.expect}</td>${r.per.map(p => `<td>${fmt(p)}</td>`).join("")}<td><b>${r.sum}</b></td><td><b>${fmt(r.avg)}</b></td></tr>`).join("")}</table>`
     : `<div class="hideBox"><div style="font-size:54px">🙈</div><p class="big2">순위표가 가려져 있어요</p>
         <p class="muted">전자칠판에 연결돼 있다면 학생들에게 보일 수 있어요.<br>버튼을 <b>두 번</b> 눌러야 펼쳐져요.</p>
         <button class="btn ${tableArm ? "red" : "gray"}" id="showT">${tableArm ? "정말 펼칠까요? 한 번 더 누르기" : "👀 순위표 보기"}</button></div>`}
-    <p class="muted" style="margin-top:12px">💡 팀마다 평가 인원이 다르면(결석·미제출) <b>합계</b>는 불공평해질 수 있어요. 그럴 땐 <b>평균</b>으로 보세요.</p></div>`;
+    <p class="muted" style="margin-top:12px">${hasMembers() ? "💡 자기 모둠 점수는 빠지고, 모둠마다 평가 인원이 달라서 <b>평균</b>으로만 순위를 매겨요.<br>" : ""}💡 팀마다 평가 인원이 다르면(결석·미제출) <b>합계</b>는 불공평해질 수 있어요. 그럴 땐 <b>평균</b>으로 보세요.</p></div>`;
   app.querySelectorAll(".seg button").forEach(b => b.onclick = () => { metric = b.dataset.m; render(); });
   document.getElementById("show").onclick = () => { showTable = false; tableArm = false; openStage(); };
   document.getElementById("hideT")?.addEventListener("click", () => { showTable = false; render(); });
@@ -260,11 +267,12 @@ function renderResult(){
 }
 
 function renderSetup(){
-  const teamsTxt = (C.teams || []).map(t => t.title ? `${t.name} | ${t.title}` : t.name).join("\n");
+  const teamsTxt = (C.teams || []).map(t => mem(t).length ? `${t.name} | ${t.title || ""} | ${mem(t).join(", ")}` : t.title ? `${t.name} | ${t.title}` : t.name).join("\n");
   const items = C.items || DEFAULT.items;
   app.innerHTML = `<div class="grid2">
-    <div class="card"><h2>팀 목록</h2><p class="muted">한 줄에 한 팀. 영상 제목은 <b>|</b> 뒤에 써요.<br>예) <code>1팀 | 멈춰! 차가 와요</code></p>
+    <div class="card"><h2>팀 목록</h2><p class="muted">한 줄에 한 팀: <b>팀 이름 | 영상 제목 | 모둠원</b><br>예) <code>1팀 | 멈춰! 차가 와요 | 문하주, 박현후, 이도윤</code><br>제목이 없으면 <code>1팀 | | 문하주, 박현후</code><br>모둠원은 명단과 <b>똑같은 이름</b>으로, 쉼표로 구분해요. 모둠원은 자기 모둠을 평가하지 않아요.</p>
       <textarea id="teams">${esc(teamsTxt)}</textarea>
+      ${setupWarn ? `<p style="color:#b3261e;white-space:pre-line">${esc(setupWarn)}</p>` : ""}
       <small class="muted">⚠️ 평가를 시작한 뒤에는 팀 <b>순서</b>를 바꾸지 마세요(이름 수정은 괜찮아요).</small></div>
     <div class="card"><h2>학생 명단</h2><p class="muted">한 줄에 한 명. 동명이인은 반을 붙여요.<br>예) <code>3-2 김민준</code></p>
       <textarea id="students">${esc((C.students || []).join("\n"))}</textarea></div></div>
@@ -276,10 +284,23 @@ function renderSetup(){
 
   document.getElementById("save").onclick = async () => {
     const lines = document.getElementById("teams").value.split("\n").map(s => s.trim()).filter(Boolean);
-    const teams = lines.map((l, i) => { const [name, ...rest] = l.split("|"); return { id: "t" + (i + 1), name: name.trim(), title: rest.join("|").trim() }; });
+    const teams = lines.map((l, i) => {
+      const [name, title = "", mems = ""] = l.split("|");
+      const members = [...new Set(mems.split(/[,，]/).map(x => x.replace(/\//g, "-").trim()).filter(Boolean))];
+      return { id: "t" + (i + 1), name: name.trim(), title: title.trim(), members };
+    });
     const students = [...new Set(document.getElementById("students").value.split("\n").map(s => s.replace(/\//g, "-").trim()).filter(Boolean))];
     const its = [0,1,2].map(k => document.getElementById("item" + k).value.trim() || DEFAULT.items[k]);
-    try { await updateDoc(contestRef, { teams, students, items: its }); toast("저장했어요 ✅"); }
+    // 모둠원 확인: 명단에 없는 이름, 두 모둠에 들어간 이름
+    const w = [], seen = {};
+    teams.forEach(t => t.members.forEach(m => {
+      if (!students.includes(m)) w.push(`⚠️ "${m}"(${t.name})은 학생 명단에 없어요. 이름을 똑같이 써 주세요.`);
+      if (seen[m]) w.push(`⚠️ "${m}"이 ${seen[m]}과 ${t.name}에 모두 들어 있어요.`); seen[m] = t.name;
+    }));
+    const none = teams.some(t => t.members.length) ? students.filter(s => !seen[s]) : [];
+    if (none.length) w.push(`ℹ️ 모둠이 없는 학생: ${none.join(", ")} (모든 팀을 평가해요)`);
+    setupWarn = w.join("\n");
+    try { await updateDoc(contestRef, { teams, students, items: its }); toast(w.some(x => x.startsWith("⚠️")) ? "저장했어요 — 경고를 확인해 주세요" : "저장했어요 ✅"); render(); }
     catch (e) { toast("저장 실패: " + e.code); }
   };
   document.getElementById("reset").onclick = async () => {

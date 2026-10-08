@@ -280,6 +280,11 @@ function render(){
     app.innerHTML = `<div class="card center"><div class="light"></div><p class="big">잠깐 기다려요!</p><p class="muted">선생님이 다음 영상을 틀어줄 거예요.<br>영상을 집중해서 봐요 👀</p></div>`;
     return;
   }
+  if ((team.members || []).includes(me)) {   // 우리 모둠 영상
+    app.innerHTML = `<div class="card center film"><div class="done-emoji">📣</div><p class="big">${esc(team.name)}은 우리 모둠 영상이에요!</p>
+      <p class="muted" style="font-size:18px">자기 모둠은 평가하지 않아요.<br>친구들이 평가하는 동안 멋지게 응원해 주세요 👏</p></div>`;
+    return;
+  }
   if (submitted.has(me)) {
     app.innerHTML = `<div class="card center film"><div class="done-emoji">🍿</div><p class="big">${esc(team.name)} 평가 완료!</p><p class="muted">다음 영상을 기다려요.</p></div>`;
     return;
