@@ -655,7 +655,7 @@ function sign(title,ribbon,parent){const d=el('div','sign',parent||HUD,`<div cla
 function starPnl(parent){if(G.classList.contains('arena'))return el('div','pnl',parent,`${im('x_star')}<div><small>별</small><b id="starN">${ST.stars}</b></div>`);return el('div','starbar',parent,`<small>별</small><span id="starN">${ST.stars}</span>`);}
 const HEAD={zoo:{x:50,y:13.5,w:25,rx:50,ry:22.5},art:{x:50,y:19.5,w:22.5,rx:50,ry:6},lib:{x:50,y:15.5,w:29,rx:50,ry:29.5},post:{x:31,y:26.5,w:20.5,rx:31,ry:37.5},cake:{x:50,y:18,w:29,rx:50,ry:31.5},hotel:{x:50,y:45,w:18.5,rx:44,ry:6},map:{x:45.6,y:14,w:22},festival:{x:53,y:12,w:19}};
 function header(key,logo,text){const c=HEAD[key];const L=spr(logo,c.x,c.y,c.w,'logoimg',HUD);let r=null;if(text&&c.rx!=null){r=el('div','ribbon2',HUD,text);place(r,c.rx,c.ry);}return{logo:L,ribbon:r};}
-function soundBtn(parent){const b=el('button','rbtn lav',parent,SET.sfx?'🔊':'🔇');b.title='소리';b.onclick=()=>{SET.sfx=!SET.sfx;saveSet();b.textContent=SET.sfx?'🔊':'🔇';};return b;}
+function soundBtn(parent){const on=()=>SET.sfx||SET.bgm;const b=el('button','rbtn lav',parent,on()?'🔊':'🔇');b.title='소리 (효과음·배경음)';b.onclick=()=>{const v=!on();SET.sfx=v;SET.bgm=v;saveSet();b.textContent=v?'🔊':'🔇';if(v)SFX.tap();};return b;}
 function missionHud(s,{M,total,onHome,onRetry,homeLabel}){
   const L=el('div','hl',HUD);const home=el('button','rbtn pink',L,'🏠');home.title=homeLabel||'지도로';home.onclick=()=>{lockInput();onHome();};starPnl(L);
   const sg=(M.logo&&HEAD[M.key])?header(M.key,M.logo,M.text):sign(M.name,M.text);
