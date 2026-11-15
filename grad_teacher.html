@@ -486,8 +486,6 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 function openStage(){
   stageRows = stats().filter(r => r.n);
   if (!stageRows.length) { toast("아직 점수가 없어요"); return; }
-  // 발표 화면을 열면 평가를 자동으로 끝내요 → 학생 화면이 "모든 평가가 끝났어요! 앞쪽 화면을 봐 주세요"로 바뀌어요
-  if (C.current !== "__done__") updateDoc(contestRef, { current: "__done__", claimOpen: false }).catch(e => toast("학생 화면 전환 실패: " + e.code));
   setBgm(false); ac(); SFX.chime();
   const st = document.getElementById("stage");
   st.className = "show";
