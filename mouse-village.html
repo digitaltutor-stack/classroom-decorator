@@ -491,6 +491,8 @@ img{-webkit-user-drag:none;user-drag:none}
 
 
 /* ===== 보물 모으기 ===== */
+.tmove{display:inline-block;margin:.1em 0 .2em!important;font-size:1.2em!important;color:#fff!important;background:linear-gradient(#ff9fc8,#ff6fa5);border:.14em solid #fff;border-radius:999px;padding:.2em 1em .1em;box-shadow:0 .2em 0 #d24b80}
+
 .thud{position:absolute;left:50%;top:1.8%;transform:translateX(-50%);display:flex;gap:calc(var(--u)*2.2);z-index:4}
 .tpill{min-width:calc(var(--u)*17);height:calc(var(--u)*6.4);display:flex;align-items:center;justify-content:center;gap:.25em;background:#fffcf4;border:.2em solid #fff;border-radius:999px;box-shadow:0 0 0 .2em #d9c6fa,0 .35em .7em rgba(90,50,140,.25);font-size:2em;color:var(--brown);padding:.1em .8em 0}
 .tpill b{font-size:1.15em;color:#fff;-webkit-text-stroke:.1em var(--brown);paint-order:stroke fill;text-shadow:0 .08em 0 var(--brown)}
@@ -1092,7 +1094,7 @@ SCENES.treasure=(s,arg)=>{
   if(arg&&arg.auto){countdown();}else rules();
   function rules(){
     const v=el('div','veil',UI);v.style.background='rgba(60,30,90,.25)';const c=el('div','card wincard',v);
-    c.innerHTML=`<div class="ribbon wr">⭐ 보물 모으기</div><p style="font-size:1.45em;margin-top:.2em">60초 동안 보물을 많이 모아 보세요!</p>
+    c.innerHTML=`<div class="ribbon wr">⭐ 보물 모으기</div><p style="font-size:1.45em;margin-top:.2em">60초 동안 보물을 많이 모아 보세요!</p><p class="tmove">🏃 보물이 움직여요! 따라가서 잡아요</p>
       <div class="trule"><div>${im('x_star')}<span>일반 보물</span><b>한 번 클릭!</b><em>+1</em></div><div><img src="${CHEST_IMG('closed')}" alt=""><span>보물상자</span><b>두 번 톡톡!</b><em>+5</em></div></div>
       ${best()?`<p>🏆 최고 기록 <b>${best()}개</b></p>`:''}`;
     const r=el('div','row',c);r.style.marginTop='.4em';
@@ -1112,26 +1114,38 @@ SCENES.treasure=(s,arg)=>{
     const pBest=el('div','tpill',top,`🏆 <b>${best()}</b>개`);
     const hm=el('button','rbtn pink abs',HUD,'🏠');hm.title='달인 화면';hm.style.left='1.2%';hm.style.bottom='2.5%';hm.onclick=()=>{lockInput();go('master');};
     const setScore=n=>{score+=n;$('#tScore').textContent=score;replay(pScore,'hop');};
-    // 생성 가능한 영역(%): 상단 HUD·가장자리·하단·큰 무대 장식을 피해서 고른 칸
-    const ZONES=[[37,63,28,56],[37,63,28,56],[28,72,70,80],[30,70,82,90]];
-    function freeSpot(size){for(let t=0;t<80;t++){const z=pick(ZONES);const x=rnd(z[0],z[1]),y=rnd(z[2],z[3]);
+    // 보물이 움직이는 영역(%): 무대판과 광장 (상단 표시·가장자리 가게·하단 버튼 제외)
+    const AREA={x0:24,x1:76,y0:24,y1:90};
+    // 속도(화면 너비 %/초): 0~20초 느리게 → 20~40초 보통 → 40~60초 빠르게
+    const SPEEDS=[3.5,6,8.5];let stage=0;
+    function freeSpot(size){const hx=size/2+.5,hy=size*16/9/2+.5;for(let t=0;t<80;t++){const x=rnd(AREA.x0+hx,AREA.x1-hx),y=rnd(AREA.y0+hy,AREA.y1-hy);
         if(items.every(o=>Math.hypot(o.x-x,(o.y-y)*.5625)>(o.size+size)/2+.6))return{x,y};}return null;}
     function spawn(){if(over||!s.alive)return;const chests=items.filter(o=>o.chest).length;
       const chest=Math.random()<.2&&chests<2;const size=TS(chest?rnd(9.5,11.5):rnd(6.5,8.5));const pt=freeSpot(size);if(!pt){s.after(300,spawn);return;}
-      const o={x:pt.x,y:pt.y,size,chest};items.push(o);
+      const o=pt;o.size=size;o.chest=chest;const ang=rnd(0,Math.PI*2);o.vx=Math.cos(ang);o.vy=Math.sin(ang);o.turn=rnd(1.5,3.5);o.hold=0;o.hover=false;items.push(o);
       const d=el('div','treasure'+(chest?' chest':''),SCN,chest?`<img src="${CHEST_IMG('closed')}" alt="" draggable="false">`:im(pick(TREASURES)));
       place(d,pt.x,pt.y,size);d.style.animationDelay=rnd(0,1.5)+'s';o.el=d;
       const finish=()=>{const i=items.indexOf(o);if(i>=0)items.splice(i,1);s.after(450,spawn);};
       if(!chest){
-        d.addEventListener('click',e=>{if(e.button!==0||over||d._done)return;d._done=true;setScore(1);SFX.ok();popUp('+1',pt.x,pt.y);ring(pt.x,pt.y);d.classList.add('got');s.after(320,()=>d.remove());finish();});
+        d.addEventListener('pointerdown',e=>{if(e.button!==0||over||d._done||!inputOK())return;e.preventDefault();d._done=true;setScore(1);SFX.ok();popUp('+1',pt.x,pt.y);ring(pt.x,pt.y);d.classList.add('got');s.after(320,()=>d.remove());finish();});
       }else{
+        d.addEventListener('pointerenter',()=>{o.hover=true;});d.addEventListener('pointerleave',()=>{o.hover=false;});
         onDouble(d,{dbl:()=>{if(over||d._done)return;d._done=true;d.querySelector('img').src=CHEST_IMG('open');d.classList.add('opened');setScore(5);SFX.magic();popUp('+5!',pt.x,pt.y-4,true);
             popStar(pt.x-3,pt.y-6,'x_star');popStar(pt.x+3,pt.y-8,'x_diamond');ring(pt.x,pt.y,'#ff8fc8');confetti(pt.x,pt.y,18,12);s.after(750,()=>{d.classList.add('got');s.after(320,()=>d.remove());});finish();},
-          single:k=>{if(over||d._done)return;if(k==='first'){replay(d,'wig');d.classList.add('shine');s.after(500,()=>d.classList.remove('shine'));}else{say('두 번 톡톡!',pt.x,pt.y-size*.9,900);}}});
+          single:k=>{if(over||d._done)return;if(k==='first'){o.hold=SET.dblMs/1000+.4;replay(d,'wig');d.classList.add('shine');s.after(500,()=>d.classList.remove('shine'));}else{say('두 번 톡톡!',pt.x,pt.y-size*.9,900);}}});
       }}
     function popUp(t,x,y,big){const p=el('div','tplus'+(big?' big':''),FX,t);p.style.left=x+'%';p.style.top=y+'%';setTimeout(()=>p.remove(),950);}
     for(let i=0;i<8;i++)spawn();
-    const timer=()=>{if(!s.alive||over)return;left--;$('#tTime').textContent=left;if(left<=10){pTime.classList.add('hurry');SFX.tap();}
+    s.loop(dt=>{if(over)return;const sp=SPEEDS[stage];
+      items.forEach(o=>{if(!o.el||o.el._done)return;if(o.hover||o.hold>0){o.hold=Math.max(0,o.hold-dt);return;}
+        const k=sp*(o.chest?.5:1)*dt;o.x+=o.vx*k;o.y+=o.vy*k*16/9;
+        const hx=o.size/2,hy=o.size*16/9/2;
+        if(o.x<AREA.x0+hx){o.x=AREA.x0+hx;o.vx=Math.abs(o.vx);}if(o.x>AREA.x1-hx){o.x=AREA.x1-hx;o.vx=-Math.abs(o.vx);}
+        if(o.y<AREA.y0+hy){o.y=AREA.y0+hy;o.vy=Math.abs(o.vy);}if(o.y>AREA.y1-hy){o.y=AREA.y1-hy;o.vy=-Math.abs(o.vy);}
+        o.turn-=dt;if(o.turn<=0){const a=Math.atan2(o.vy,o.vx)+rnd(-1.1,1.1);o.vx=Math.cos(a);o.vy=Math.sin(a);o.turn=rnd(1.5,3.5);}
+        o.el.style.left=o.x+'%';o.el.style.top=o.y+'%';});});
+    const speedUp=()=>{const d=el('div','combo',FX,'⚡ 빨라졌어요!');d.style.top='52%';d.style.fontSize='3.6em';SFX.zap();setTimeout(()=>d.remove(),1300);};
+    const timer=()=>{if(!s.alive||over)return;left--;$('#tTime').textContent=left;const ns=left<=20?2:left<=40?1:0;if(ns!==stage){stage=ns;speedUp();}if(left<=10){pTime.classList.add('hurry');SFX.tap();}
       if(left<=0){end();return;}s.after(1000,timer);};
     s.after(1000,timer);
     function end(){over=true;SCN.classList.add('locked');lockInput(800);SFX.magic();
