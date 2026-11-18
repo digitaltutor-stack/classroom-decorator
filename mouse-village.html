@@ -499,6 +499,7 @@ img{-webkit-user-drag:none;user-drag:none}
 .tlevel b{font-size:1.45em;color:#fff;-webkit-text-stroke:.14em #4b2e9c;paint-order:stroke fill;text-shadow:0 .08em 0 #4b2e9c}
 .tlevel small{font-size:.85em;color:var(--brown)}
 .tlevel.on{background:#fff7d6;border-color:#ffc93c;box-shadow:0 0 0 .2em #ffc93c,0 .25em 0 #e0a800}
+.trule.three>div{min-width:calc(var(--u)*13)}
 .trule.many{gap:.45em}.trule.many>div{min-width:calc(var(--u)*10.5);padding:.35em .4em .3em}.trule.many img{height:calc(var(--u)*5.2)}.trule.many b{font-size:1.05em}.trule.many span{font-size:.85em}
 .trule .pair{display:flex;align-items:center;gap:.1em}.trule .pair img{height:calc(var(--u)*4.2)!important}.trule .pair i{font-style:normal;color:var(--brown)}
 .tlvtag{position:absolute;left:50%;top:13.2%;transform:translateX(-50%);background:linear-gradient(#b99bff,#8b65f2);color:#fff;border:.14em solid #fff;border-radius:999px;padding:.15em 1em .05em;font-size:1.1em;-webkit-text-stroke:.12em #4a2196;paint-order:stroke fill;box-shadow:0 .2em 0 #5d3ec4;white-space:nowrap}
@@ -1106,9 +1107,9 @@ const MYSTERY_IMG=k=>IMG(k==='open'?'mystery_box_open':'mystery_box');
 const TREASURES=['x_star','x_diamond','k_cake','k_paw','k_palette','k_envelope','k_key','k_book','f_rainbow','x_crystal','x_crown'];
 /* 난이도: 속도(화면 너비 %/초, 20초마다 3단계) · 보물 크기(화면 너비 %) */
 const TLEVELS={
-  normal:{key:'normal',icon:'🌱',name:'보통',speeds:[3.5,6,8.5],size:[6.5,8.5],chestSize:[9.5,11.5],chestMul:.5},
-  fast:{key:'fast',icon:'🔥',name:'빠름',speeds:[8.5,10.5,12.5],size:[5.5,7],chestSize:[8.5,10],chestMul:.55},
-  bolt:{key:'bolt',icon:'⚡',name:'번개',speeds:[10,12.5,15],size:[5,6.5],chestSize:[8,9.5],chestMul:.6,teleport:true,specials:true}
+  normal:{key:'normal',icon:'🌱',name:'보통',speeds:[3.5,6,8.5],size:[6.5,8.5],chestSize:[9.5,11.5],chestMul:.5,bomb:{rate:.07,max:1,freeze:2}},
+  fast:{key:'fast',icon:'🔥',name:'빠름',speeds:[8.5,10.5,12.5],size:[5.5,7],chestSize:[8.5,10],chestMul:.55,bomb:{rate:.09,max:2,freeze:3}},
+  bolt:{key:'bolt',icon:'⚡',name:'번개',speeds:[10,12.5,15],size:[5,6.5],chestSize:[8,9.5],chestMul:.6,teleport:true,specials:true,bomb:{rate:.08,max:2,freeze:3}}
 };
 function tBest(lv){ST.tBest=ST.tBest||{};if(ST.treasureBest&&!ST.tBest.normal)ST.tBest.normal=ST.treasureBest;return ST.tBest[lv]||0;}
 function setTBest(lv,v){ST.tBest=ST.tBest||{};ST.tBest[lv]=v;if(lv==='normal')ST.treasureBest=v;save();}
@@ -1120,14 +1121,15 @@ SCENES.treasure=(s,arg)=>{
     const c=(img,name,how,pt)=>`<div>${img}<span>${name}</span><b>${how}</b><em>${pt}</em></div>`;
     let h=c(im('x_star'),'일반 보물','한 번 클릭!','+1')+c(`<img src="${CHEST_IMG('closed')}" alt="">`,'보물상자','두 번 톡톡!','+5');
     if(lv.specials)h+=c(`<span class="pair">${im('x_diamond')}<i>→</i>${im('treasure_basket')}</span>`,'보석','바구니로 끌기!','+3')
-      +c(`<img src="${MYSTERY_IMG('closed')}" alt="">`,'비밀 상자','오른쪽 클릭!','+3')+c(im('trick_bomb'),'장난꾸러기 폭탄','누르지 마요!','🧊 3초');
+      +c(`<img src="${MYSTERY_IMG('closed')}" alt="">`,'비밀 상자','오른쪽 클릭!','+3');
+    h+=c(im('trick_bomb'),'장난꾸러기 폭탄','누르지 마요!',`🧊 ${lv.bomb.freeze}초`);
     return h;}
   function rules(){
     const v=el('div','veil',UI);v.style.background='rgba(60,30,90,.25)';const c=el('div','card wincard tcard',v);
     c.innerHTML=`<div class="ribbon wr">⭐ 보물 모으기</div><p style="font-size:1.35em;margin:.5em 0 .15em">60초 동안 보물을 많이 모아 보세요!</p>
       <div class="tlevels">${Object.values(TLEVELS).map(l=>`<button class="tlevel" data-k="${l.key}"><i>${l.icon}</i><b>${l.name}</b><small>🏆 ${tBest(l.key)}개</small></button>`).join('')}</div>
       <p class="tmove">🏃 보물이 움직여요! 따라가서 잡아요</p><div class="trule"></div>`;
-    const draw=()=>{c.querySelectorAll('.tlevel').forEach(b=>b.classList.toggle('on',b.dataset.k===LV.key));c.querySelector('.trule').innerHTML=ruleCards(LV);c.querySelector('.trule').classList.toggle('many',!!LV.specials);};
+    const draw=()=>{c.querySelectorAll('.tlevel').forEach(b=>b.classList.toggle('on',b.dataset.k===LV.key));c.querySelector('.trule').innerHTML=ruleCards(LV);c.querySelector('.trule').classList.toggle('many',!!LV.specials);c.querySelector('.trule').classList.toggle('three',!LV.specials);};
     c.querySelectorAll('.tlevel').forEach(b=>b.onclick=()=>{LV=TLEVELS[b.dataset.k];ST.tLevel=LV.key;save();SFX.tap();draw();});
     draw();
     const r=el('div','row',c);r.style.marginTop='.3em';
@@ -1156,8 +1158,8 @@ SCENES.treasure=(s,arg)=>{
     function freeSpot(size){const hx=size/2+.5,hy=size*16/9/2+.5;for(let t=0;t<80;t++){const x=rnd(AREA.x0+hx,AREA.x1-hx),y=rnd(AREA.y0+hy,AREA.y1-hy);
         if(items.every(o=>Math.hypot(o.x-x,(o.y-y)*.5625)>(o.size+size)/2+.6))return{x,y};}return null;}
     function pickKind(){const cnt=k=>items.filter(o=>o.kind===k).length;const r=Math.random();
-      if(!LV.specials)return r<.2&&cnt('chest')<2?'chest':'normal';
-      if(r<.15&&cnt('chest')<2)return'chest';if(r<.27&&cnt('gem')<2)return'gem';if(r<.37&&cnt('mystery')<1)return'mystery';if(r<.45&&cnt('bomb')<2)return'bomb';return'normal';}
+      if(!LV.specials){if(r<.2&&cnt('chest')<2)return'chest';if(r<.2+LV.bomb.rate&&cnt('bomb')<LV.bomb.max)return'bomb';return'normal';}
+      if(r<.15&&cnt('chest')<2)return'chest';if(r<.27&&cnt('gem')<2)return'gem';if(r<.37&&cnt('mystery')<1)return'mystery';if(r<.37+LV.bomb.rate&&cnt('bomb')<LV.bomb.max)return'bomb';return'normal';}
     function spawn(){if(over||!s.alive)return;const kind=pickKind();
       const sz=kind==='chest'||kind==='mystery'?LV.chestSize:LV.size;const size=TS(rnd(sz[0],sz[1])*(kind==='bomb'?1.05:1));const pt=freeSpot(size);if(!pt){s.after(300,spawn);return;}
       const o=pt;o.size=size;o.kind=kind;o.chest=kind==='chest';const ang=rnd(0,Math.PI*2);o.vx=Math.cos(ang);o.vy=Math.sin(ang);o.turn=rnd(1.5,3.5);o.hold=0;o.hover=false;o.tp=rnd(3,5);items.push(o);
@@ -1174,6 +1176,8 @@ SCENES.treasure=(s,arg)=>{
           single:k=>{if(over||d._done)return;if(k==='first'){o.hold=SET.dblMs/1000+.4;replay(d,'wig');d.classList.add('shine');s.after(500,()=>d.classList.remove('shine'));}else{say('두 번 톡톡!',o.x,o.y-size*.9,900);}}});
       }else if(kind==='bomb'){
         d.addEventListener('pointerdown',e=>{if(e.button!==0||over||d._done||frozen>0)return;e.preventDefault();d._done=true;freeze(o.x,o.y);vanish(380);finish();});
+        // 폭탄은 오래 남지 않고 6~9초 뒤 스스로 사라짐 → 다른 곳에서 새로 나와 게임 내내 고르게 섞임
+        s.after(rnd(6000,9000),()=>{if(over||d._done)return;d._done=true;ring(o.x,o.y,'#b9a7ff');vanish(320);finish();});
       }else if(kind==='mystery'){
         d.addEventListener('pointerenter',()=>{o.hover=true;});d.addEventListener('pointerleave',()=>{o.hover=false;});
         d.addEventListener('click',e=>{if(e.button!==0||busy()||d._done||MENU)return;replay(d,'wig');say('오른쪽 클릭!',o.x,o.y-size*.9,900);SFX.soft();});
@@ -1189,7 +1193,7 @@ SCENES.treasure=(s,arg)=>{
           else{o.x=clamp(o.x,AREA.x0+size/2,AREA.x1-size/2);o.y=clamp(o.y,AREA.y0+size*.9,AREA.y1-size*.9);d.style.left=o.x+'%';d.style.top=o.y+'%';o.hold=.3;if(!over)say('바구니에 넣어요!',o.x,o.y-size*.9,900);}};
         d.addEventListener('pointerup',drop);d.addEventListener('pointercancel',drop);d.addEventListener('lostpointercapture',drop);
       }}
-    function freeze(x,y){frozen=3;SFX.soft();SCN.classList.add('frozen');const ice=el('div','ice',HUD,'🧊 얼음! <b>3</b>');ring(x,y,'#7fd3ff');
+    function freeze(x,y){frozen=LV.bomb.freeze;SFX.soft();SCN.classList.add('frozen');const ice=el('div','ice',HUD,`🧊 얼음! <b>${frozen}</b>`);ring(x,y,'#7fd3ff');
       const t=()=>{if(!s.alive)return;frozen--;if(frozen<=0){ice.remove();SCN.classList.remove('frozen');SFX.tap();return;}ice.querySelector('b').textContent=frozen;s.after(1000,t);};s.after(1000,t);}
     function popUp(t,x,y,big){const p=el('div','tplus'+(big?' big':''),FX,t);p.style.left=x+'%';p.style.top=y+'%';setTimeout(()=>p.remove(),950);}
     for(let i=0;i<8;i++)spawn();
